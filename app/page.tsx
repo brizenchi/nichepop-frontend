@@ -1,444 +1,540 @@
-"use client"
-
 import Link from "next/link"
-import dynamic from "next/dynamic"
+import {
+  ArrowRight,
+  BarChart3,
+  CheckCircle2,
+  Compass,
+  Database,
+  Lightbulb,
+  Link2,
+  MessageSquare,
+  Radar,
+  Search,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Users,
+} from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import { BrandMark } from "@/components/brand-logo"
+import { TryFreeButton } from "@/components/try-free-button"
+import { OrganizationSchema, WebApplicationSchema } from "@/components/seo/structured-data"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { OrganizationSchema, WebApplicationSchema } from "@/components/seo/structured-data"
-import {
-  TrendingUp,
-  Search,
-  Zap,
-  Target,
-  BarChart3,
-  Sparkles,
-  CheckCircle2,
-  ArrowRight
-} from "lucide-react"
-import { BrandMark } from "@/components/brand-logo"
 
-const RadarChart = dynamic(
-  () => import("@/components/radar-chart").then((mod) => mod.RadarChart),
+const sourceChips = ["Ideas DB", "Idea Analysis", "Relevant Threads", "Reply Suggestions", "Lead Tracking"]
+
+const dashboardPanels = [
   {
-    ssr: false,
-    loading: () => (
-      <div className="relative w-full max-w-lg">
-        <div className="relative rounded-2xl bg-[#0F1635]/80 backdrop-blur-xl border border-[#1E2650] p-6 shadow-2xl shadow-[#0080FF]/20 h-[500px] flex items-center justify-center">
-          <div className="text-[#8B92B3]">Loading radar...</div>
-        </div>
-      </div>
-    ),
-  }
-)
+    title: "Relevant Threads",
+    description: "Threads worth reading, replying to, or turning into your next outreach move.",
+    icon: MessageSquare,
+    accent: "text-[#8B5CF6] bg-[#F3EDFF]",
+  },
+  {
+    title: "Reply Angles",
+    description: "Suggested ways to join the conversation without sounding like a spammy pitch.",
+    icon: Users,
+    accent: "text-[#1479D6] bg-[#EAF6FF]",
+  },
+  {
+    title: "Lead Follow-up",
+    description: "People and communities worth tracking once you want Reddit to become a repeatable channel.",
+    icon: Compass,
+    accent: "text-[#D49A00] bg-[#FFF7D8]",
+  },
+]
+
+const toolCards = [
+  {
+    href: "/dashboard/ideas",
+    title: "Ideas DB",
+    badge: "Free",
+    description: "Browse a free database of startup, content, and niche opportunities before you commit to one.",
+    bullets: [
+      "Open opportunity database",
+      "Source links to public discussions",
+      "Best for wide exploration",
+    ],
+    icon: Lightbulb,
+    iconTone: "text-[#D49A00] bg-[#FFF7D8]",
+  },
+  {
+    href: "/dashboard/validate",
+    title: "Idea Analysis",
+    badge: "Free",
+    description: "Paste a raw idea and get a free commercial read on demand, competition, pain points, and monetization potential.",
+    bullets: [
+      "Commercial opportunity score",
+      "Pain point and competitor snapshot",
+      "Best after you shortlist an idea",
+    ],
+    icon: BarChart3,
+    iconTone: "text-[#1479D6] bg-[#EAF6FF]",
+  },
+  {
+    href: "/dashboard",
+    title: "Reddit Marketing Panel",
+    badge: "Paid",
+    description: "Turn Reddit into a workflow with thread discovery, reply suggestions, lead tracking, and ongoing follow-up.",
+    bullets: [
+      "Relevant thread feed",
+      "Reply ideas and target users",
+      "Best when you are ready to execute",
+    ],
+    icon: MessageSquare,
+    iconTone: "text-[#8B5CF6] bg-[#F3EDFF]",
+  },
+]
+
+const workflowSteps = [
+  {
+    step: "01",
+    title: "Browse Ideas DB For Free",
+    badge: "Discovery",
+    description: "Start broad. Use the free Ideas DB to spot categories, patterns, and promising opportunities.",
+  },
+  {
+    step: "02",
+    title: "Run Free Idea Analysis",
+    badge: "Judgment",
+    description: "When one idea looks interesting, run free analysis to check demand, competition, pain points, and business potential.",
+  },
+  {
+    step: "03",
+    title: "Pay For Reddit Execution",
+    badge: "Execution",
+    description: "Upgrade only when you want the Reddit panel: threads to target, replies to write, leads to track, and a workflow to keep running.",
+  },
+]
+
+const valueProps = [
+  {
+    title: "Free exploration first",
+    description: "Users can explore opportunities without friction. That makes NichePop useful before any payment decision shows up.",
+    icon: Target,
+    iconTone: "text-[#8B5CF6] bg-[#F3EDFF]",
+  },
+  {
+    title: "Free judgment second",
+    description: "A free idea analysis turns a vague hunch into a clearer business decision before users commit time or money.",
+    icon: Search,
+    iconTone: "text-[#1479D6] bg-[#EAF6FF]",
+  },
+  {
+    title: "Paid only at execution",
+    description: "The real paywall sits where the value becomes operational: running Reddit marketing as a repeatable workflow.",
+    icon: Link2,
+    iconTone: "text-[#D49A00] bg-[#FFF7D8]",
+  },
+]
+
+const personas = [
+  "Indie hackers who want free opportunity discovery before they narrow down a bet",
+  "Founders who want a quick business read on an idea before building more",
+  "Builders who use Reddit as a customer discovery or outbound channel",
+  "Small teams that need a repeatable Reddit workflow instead of ad hoc lurking",
+]
 
 export default function HomePage() {
-
   return (
-    <div className="min-h-screen bg-[#0A0E27]">
+    <div className="min-h-screen bg-transparent text-[#111111]">
       <OrganizationSchema />
       <WebApplicationSchema />
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="pt-24 pb-16 relative overflow-hidden">
-        {/* Grid background */}
-        <div className="absolute inset-0 pointer-events-none" style={{
-          backgroundImage: 'linear-gradient(rgba(30, 38, 80, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(30, 38, 80, 0.3) 1px, transparent 1px)',
-          backgroundSize: '50px 50px'
-        }}></div>
+      <section className="relative isolate min-h-[calc(100vh-64px)] overflow-hidden bg-[#FAFAFA] pt-24 pb-16 sm:pt-28 sm:pb-20 lg:min-h-[980px] lg:pt-32">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute inset-0 bg-[#FAFAFA]" />
+          <div className="absolute top-[9.5rem] right-[-6rem] hidden h-[18rem] w-[18rem] rounded-full bg-[#F3F600]/38 lg:block" />
+          <div className="absolute bottom-[-15rem] left-[-5.25rem] hidden h-[30rem] w-[30rem] rounded-full bg-[#F3F600]/38 lg:block" />
 
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0080FF]/20 rounded-full blur-3xl animate-gentle-glow"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#39FF14]/10 rounded-full blur-3xl animate-gentle-glow" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute top-[15.5rem] left-[0.75rem] hidden h-[20rem] w-[10rem] overflow-hidden bg-[#FFECE2]/78 lg:block">
+            <div
+              className="absolute inset-0 opacity-80"
+              style={{
+                backgroundImage:
+                  "repeating-radial-gradient(ellipse at 24% 28%, transparent 0 12px, rgba(255,255,255,0.38) 13px 14px, transparent 15px 27px), repeating-radial-gradient(ellipse at 72% 66%, transparent 0 14px, rgba(255,255,255,0.34) 15px 16px, transparent 17px 31px), repeating-radial-gradient(ellipse at 34% 82%, transparent 0 10px, rgba(255,255,255,0.28) 11px 12px, transparent 13px 24px)",
+                backgroundSize: "180px 220px, 210px 180px, 160px 170px",
+                backgroundPosition: "-46px -28px, -74px 26px, -20px 80px",
+              }}
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.18),transparent_42%,rgba(253,195,112,0.16))]" />
+          </div>
+
+          <div className="absolute right-[1.5rem] bottom-[6.5rem] hidden h-[20rem] w-[8.5rem] overflow-hidden bg-[#F7B6D8]/72 lg:block">
+            <div
+              className="absolute inset-0 opacity-58"
+              style={{
+                backgroundImage:
+                  "linear-gradient(62deg, transparent 0 37%, rgba(255,255,255,0.26) 38% 45%, transparent 46% 100%), linear-gradient(-62deg, transparent 0 37%, rgba(255,255,255,0.24) 38% 45%, transparent 46% 100%), repeating-linear-gradient(62deg, rgba(218,74,154,0.12) 0 1px, transparent 1px 36px), repeating-linear-gradient(-62deg, rgba(218,74,154,0.11) 0 1px, transparent 1px 36px)",
+                backgroundSize: "54px 68px, 54px 68px, 54px 68px, 54px 68px",
+              }}
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(255,255,255,0.2),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.1),transparent)]" />
+          </div>
+
+          <div className="absolute right-[7rem] bottom-[5.5rem] hidden h-20 w-36 rounded-t-full bg-[#F9C6D2] lg:block" />
+          <div className="absolute inset-x-0 bottom-0 h-[25rem] bg-[linear-gradient(rgba(17,17,17,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(17,17,17,0.045)_1px,transparent_1px)] [mask-image:linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.72)_22%,black_100%)] bg-[size:32px_32px] opacity-65" />
+          <div className="absolute top-12 right-[5%] hidden h-[14rem] w-[14rem] rounded-full border border-black/14 bg-[linear-gradient(rgba(17,17,17,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(17,17,17,0.08)_1px,transparent_1px)] bg-[size:35px_35px] lg:block" />
+          <div className="absolute top-[6.5rem] left-[4.5%] hidden h-40 w-52 bg-[radial-gradient(circle,rgba(17,17,17,0.16)_1px,transparent_1.5px)] bg-[size:13px_13px] opacity-30 lg:block" />
+          <div className="absolute top-[4.75rem] right-[12%] hidden h-44 w-56 bg-[radial-gradient(circle,rgba(17,17,17,0.16)_1px,transparent_1.5px)] bg-[size:13px_13px] opacity-30 lg:block" />
         </div>
 
-        <div className="container mx-auto min-w-[1200px] max-w-7xl px-8 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Content */}
-            <div className="text-center lg:text-left space-y-6">
-              <Badge className="bg-[#0F1635] text-[#39FF14] border-[#1E2650] px-4 py-1.5 text-xs backdrop-blur-sm">
-                <Sparkles className="h-3.5 w-3.5 mr-2" />
-                Discover Your Next Big Opportunity
-              </Badge>
+        <div className="container relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <Badge className="rounded-full border-[#E8E1F4] bg-white/90 px-4 py-1.5 text-xs text-[#7D4CE6] shadow-[0_8px_22px_rgba(125,76,230,0.08)]">
+                  <Sparkles className="mr-2 h-3.5 w-3.5" />
+                  Two free tools. Upgrade only for Reddit execution.
+                </Badge>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white" style={{ fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-0.02em', lineHeight: '1.1' }}>
-                Find Profitable Niches
-                <br />
-                <span className="bg-gradient-to-r from-[#0080FF] to-[#39FF14] bg-clip-text text-transparent">
-                  Before Everyone Else
-                </span>
-              </h1>
+                <h1
+                  className="max-w-4xl text-4xl font-black tracking-tight text-[#111111] sm:text-5xl lg:text-6xl"
+                  style={{ fontFamily: "Space Grotesk, sans-serif", lineHeight: "1.04", letterSpacing: "-0.04em" }}
+                >
+                  Stop guessing what to build next.
+                  <span className="block text-[#111111]">Find an opportunity, pressure-test it, then market it on Reddit.</span>
+                </h1>
 
-              <p className="text-lg text-white max-w-xl lg:max-w-none leading-relaxed font-medium">
-                Discover trending, low-competition niches 3 months before they peak. Real-time Reddit insights + AI analysis—starting at $12.9/month.
-              </p>
+                <p className="max-w-2xl text-lg leading-8 text-[#6E677D] sm:text-xl">
+                  Start in Ideas DB to browse real opportunities. When something looks promising, run a free Idea Analysis.
+                  Upgrade only when you want the Reddit panel for threads, replies, and lead tracking.
+                </p>
+              </div>
 
-              <div className="grid grid-cols-3 gap-4 max-w-xl lg:max-w-none mb-4">
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-[#39FF14]">10,000+</div>
-                  <div className="text-xs text-[#8B92B3]">Reddit discussions analyzed daily</div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-[1.6rem] border border-[#E8E1F4] bg-white p-4 shadow-[0_18px_38px_rgba(77,54,42,0.06)]">
+                  <div className="text-2xl font-bold text-[#8B5CF6]">1</div>
+                  <div className="mt-1 text-sm text-[#6E677D]">Ideas DB is free</div>
                 </div>
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-[#39FF14]">3 months</div>
-                  <div className="text-xs text-[#8B92B3]">Earlier trend detection</div>
+                <div className="rounded-[1.6rem] border border-[#E8E1F4] bg-white p-4 shadow-[0_18px_38px_rgba(77,54,42,0.06)]">
+                  <div className="text-2xl font-bold text-[#1479D6]">2</div>
+                  <div className="mt-1 text-sm text-[#6E677D]">Idea Analysis is free</div>
                 </div>
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-[#39FF14]">95%</div>
-                  <div className="text-xs text-[#8B92B3]">Lower competition keywords</div>
+                <div className="rounded-[1.6rem] border border-[#E8E1F4] bg-white p-4 shadow-[0_18px_38px_rgba(77,54,42,0.06)]">
+                  <div className="text-2xl font-bold text-[#D49A00]">3</div>
+                  <div className="mt-1 text-sm text-[#6E677D]">Reddit panel is paid</div>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center lg:items-start lg:justify-start justify-center gap-3 pt-2">
-                <Link href="/dashboard">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <TryFreeButton
+                  guestHref="/dashboard/ideas"
+                  authenticatedHref="/dashboard/ideas"
+                  size="lg"
+                  className="w-full rounded-full bg-[#111111] px-8 py-5 text-base font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#111111]/92 hover:shadow-[0_18px_34px_rgba(17,17,17,0.14)] sm:w-auto"
+                >
+                  Open Ideas DB
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </TryFreeButton>
+                <Link href="/dashboard/validate">
                   <Button
                     size="lg"
-                    className="bg-[#39FF14] hover:bg-[#39FF14]/90 text-[#0A0E27] font-bold text-base px-8 py-5 rounded-xl hover:shadow-[0_0_30px_rgba(57,255,20,0.4)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+                    variant="outline"
+                    className="w-full rounded-full border-[#E8E1F4] bg-white/75 px-8 py-5 text-base text-[#111111] transition-all duration-200 hover:border-[#7D4CE6] hover:bg-[#F7F4FF] sm:w-auto"
                   >
-                    Try Free
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href="#features">
-                  <Button size="lg" variant="outline" className="text-base px-8 py-5 rounded-xl border-2 border-[#1E2650] bg-transparent backdrop-blur-sm text-white hover:bg-[#0080FF]/20 hover:border-[#0080FF] hover:text-white transition-all duration-200 cursor-pointer">
-                    Learn More
+                    Run Idea Analysis
                   </Button>
                 </Link>
               </div>
 
-              <div className="flex items-center justify-center lg:justify-start gap-6 pt-4 text-xs text-[#8B92B3]">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-[#39FF14]" />
-                  <span className="font-medium">No credit card required</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-[#39FF14]" />
-                  <span className="font-medium">Free trial included</span>
-                </div>
+              <div className="flex flex-wrap gap-2">
+                {sourceChips.map((source) => (
+                  <span key={source} className="rounded-full border border-[#E8E1F4] bg-white px-3 py-1.5 text-xs text-[#6E677D] shadow-[0_8px_18px_rgba(77,54,42,0.04)]">
+                    {source}
+                  </span>
+                ))}
               </div>
 
-              <div className="pt-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#8B92B3] mb-3">
-                  Popular keyword guides
-                </p>
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
-                  <Link
-                    href="/use-cases/bloggers"
-                    className="text-xs px-3 py-1.5 rounded-full border border-[#1E2650] bg-[#0F1635]/70 text-[#8B92B3] hover:text-white hover:border-[#0080FF] transition-colors"
-                  >
-                    Low competition keywords for bloggers (examples)
-                  </Link>
-                  <Link
-                    href="/compare/ahrefs"
-                    className="text-xs px-3 py-1.5 rounded-full border border-[#1E2650] bg-[#0F1635]/70 text-[#8B92B3] hover:text-white hover:border-[#39FF14] transition-colors"
-                  >
-                    Ahrefs alternative comparison
-                  </Link>
-                  <Link
-                    href="/compare/semrush"
-                    className="text-xs px-3 py-1.5 rounded-full border border-[#1E2650] bg-[#0F1635]/70 text-[#8B92B3] hover:text-white hover:border-[#39FF14] transition-colors"
-                  >
-                    SEMrush alternative comparison
-                  </Link>
+              <div className="flex flex-wrap items-center gap-5 text-sm text-[#6E677D]">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-[#43B86E]" />
+                  Ideas DB stays free
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-[#43B86E]" />
+                  Idea Analysis stays free
                 </div>
               </div>
             </div>
 
-            {/* Right Chart */}
-            <div className="hidden lg:flex justify-center items-center">
-              <RadarChart />
-            </div>
+            <Card className="overflow-hidden rounded-[2rem] border-[#E8E1F4] bg-white shadow-[0_30px_80px_rgba(77,54,42,0.1)]">
+              <CardContent className="p-4 sm:p-6">
+                <div className="rounded-[1.7rem] border border-[#E8E1F4] bg-white p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-[1rem] border border-[#E8E1F4] bg-white shadow-[0_10px_20px_rgba(125,76,230,0.08)]">
+                        <BrandMark className="h-7 w-7" withGlow />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-[#111111]">Reddit Marketing Panel</div>
+                        <div className="text-xs text-[#6E677D]">The paid execution workflow</div>
+                      </div>
+                    </div>
+                    <Badge className="border-[#E8E1F4] bg-white text-[#6E677D]">Paid workflow</Badge>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-4">
+                  <div className="rounded-[1.9rem] border border-[#E8E1F4] bg-[#F3EDFF] p-5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-[#7D7590]">What the paid panel does</p>
+                        <h2 className="mt-2 text-xl font-bold text-[#111111]">Threads → Replies → Leads</h2>
+                      </div>
+                      <Radar className="h-5 w-5 text-[#8B5CF6]" />
+                    </div>
+                    <div className="mt-4 grid gap-3">
+                      {dashboardPanels.map((panel) => {
+                        const Icon = panel.icon
+                        return (
+                          <div key={panel.title} className="rounded-[1.35rem] border border-[#E8E1F4] bg-white/88 p-4">
+                            <div className="flex items-center gap-3">
+                              <div className={`rounded-[1rem] p-2.5 ${panel.accent}`}>
+                                <Icon className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-semibold text-[#111111]">{panel.title}</h3>
+                                <p className="mt-1 text-sm leading-6 text-[#6E677D]">{panel.description}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="rounded-[1.9rem] border border-[#E8E1F4] bg-[#FFF7D8] p-5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-[#7D7590]">Why users pay</p>
+                        <h2 className="mt-2 text-xl font-bold text-[#111111]">Execution is the premium layer</h2>
+                      </div>
+                      <Target className="h-5 w-5 text-[#D49A00]" />
+                    </div>
+                    <div className="mt-4 rounded-[1.35rem] border border-[#E8E1F4] bg-white/80 p-4">
+                      <p className="text-sm leading-7 text-[#6E677D]">
+                        Free tools help users discover and judge ideas. The paid layer starts when they want Reddit threads,
+                        reply suggestions, lead lists, and a workflow they can keep using every week.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
 
-      {/* Pain Points + How It Works Section */}
-      <section className="py-20 bg-[#0A0E27]">
-        <div className="container mx-auto min-w-[1200px] max-w-7xl px-8">
-          {/* Pain Points */}
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              Tired of Missing Profitable Opportunities?
+      <section className="py-18 sm:py-20">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-black tracking-tight text-[#111111] sm:text-4xl" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+              The product should match the real buying sequence.
             </h2>
-            <p className="text-lg text-[#8B92B3] max-w-3xl mx-auto">
-              Traditional keyword research tools are holding you back. Here's why:
+            <p className="mx-auto mt-4 max-w-3xl text-lg text-[#6E677D]">
+              Users usually move through three questions in order: what opportunities exist, is this idea commercially interesting,
+              and only then how do I turn Reddit into a working acquisition channel.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 mb-20">
-            <Card className="border-[#1E2650] bg-[#0F1635]/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="text-4xl mb-3">💸</div>
-                <h3 className="text-white font-bold text-lg mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Too Expensive</h3>
-                <p className="text-sm text-[#8B92B3] leading-relaxed">
-                  Ahrefs and SEMrush cost $99-999/month. That's $1,188-11,988/year. NichePop starts at just $12.9/month—87% cheaper with the insights you actually need.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-[#1E2650] bg-[#0F1635]/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="text-4xl mb-3">⏰</div>
-                <h3 className="text-white font-bold text-lg mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Always Too Late</h3>
-                <p className="text-sm text-[#8B92B3] leading-relaxed">
-                  By the time keywords show up in traditional tools, the opportunity is already saturated. You need to find trends before they explode, not after.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-[#1E2650] bg-[#0F1635]/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="text-4xl mb-3">🤯</div>
-                <h3 className="text-white font-bold text-lg mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Overwhelming Complexity</h3>
-                <p className="text-sm text-[#8B92B3] leading-relaxed">
-                  Too many features, confusing metrics, and no clear direction. You spend hours analyzing data instead of creating content and making money.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-12 items-start">
-            <div className="space-y-6">
-              <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                How NichePop Solves This
-              </h2>
-              <p className="text-base text-[#8B92B3] leading-relaxed">
-                NichePop monitors real conversations happening right now on Reddit, niche forums, and social platforms. Our AI identifies emerging topics and validates them against Google Trends data—giving you a 3-month head start before keywords become competitive.
-              </p>
-              <p className="text-base text-[#8B92B3] leading-relaxed">
-                We analyze 10,000+ Reddit discussions daily, tracking sentiment shifts, engagement patterns, and early search signals. When a niche shows momentum, you'll know immediately—with a clear opportunity score and profit estimate.
-              </p>
-              <div className="space-y-4 pt-4">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#0080FF]/20 flex items-center justify-center">
-                    <span className="text-[#0080FF] font-bold">1</span>
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">
+            {workflowSteps.map((step) => (
+              <Card key={step.title} className="rounded-[1.9rem] border-[#E8E1F4] bg-white/88 shadow-[0_18px_40px_rgba(77,54,42,0.06)]">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs uppercase tracking-[0.24em] text-[#7D7590]">{step.step}</div>
+                    <Badge className="border-[#E8E1F4] bg-[#F7F4FF] text-[#6E677D]">{step.badge}</Badge>
                   </div>
-                  <div>
-                    <h3 className="text-white font-semibold mb-1">Real-Time Conversation Monitoring</h3>
-                    <p className="text-sm text-[#8B92B3]">Track Reddit, forums, and social signals for emerging problems and solutions people are actively discussing</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#0080FF]/20 flex items-center justify-center">
-                    <span className="text-[#0080FF] font-bold">2</span>
-                  </div>
-                  <div>
-                    <h3 className="text-white font-semibold mb-1">AI Opportunity Validation</h3>
-                    <p className="text-sm text-[#8B92B3]">Analyze competition, search trends, and profit potential using machine learning—no guesswork required</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#39FF14]/20 flex items-center justify-center">
-                    <span className="text-[#39FF14] font-bold">3</span>
-                  </div>
-                  <div>
-                    <h3 className="text-white font-semibold mb-1">Actionable Opportunity Scores</h3>
-                    <p className="text-sm text-[#8B92B3]">Get ranked opportunities with clear profitability estimates—know exactly which niches to pursue</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                Why NichePop Beats Traditional Tools
-              </h2>
-              <div className="space-y-4">
-                <Card className="border-[#1E2650] bg-[#0F1635]/80 backdrop-blur-sm">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-[#39FF14] flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h3 className="text-white font-semibold mb-1">3-Month Head Start</h3>
-                        <p className="text-sm text-[#8B92B3]">Ahrefs and SEMrush show what's already popular. NichePop identifies opportunities 3 months before they peak—when competition is still low and ranking is easy.</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="border-[#1E2650] bg-[#0F1635]/80 backdrop-blur-sm">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-[#39FF14] flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h3 className="text-white font-semibold mb-1">Reddit-Powered Discovery</h3>
-                        <p className="text-sm text-[#8B92B3]">Find niches from real conversations where people discuss actual problems—not just search volume estimates that might be inaccurate.</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="border-[#1E2650] bg-[#0F1635]/80 backdrop-blur-sm">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-[#39FF14] flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h3 className="text-white font-semibold mb-1">Affordable & Simple</h3>
-                        <p className="text-sm text-[#8B92B3]">Starting at $12.9/month—87% cheaper than Ahrefs. No overwhelming dashboards. Just clear, actionable niche opportunities.</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="pt-4">
-                <h3 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Perfect For:</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2 text-sm text-[#8B92B3]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#39FF14]"></div>
-                    Affiliate Marketers
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-[#8B92B3]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#39FF14]"></div>
-                    Content Creators
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-[#8B92B3]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#39FF14]"></div>
-                    Niche Site Builders
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-[#8B92B3]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#39FF14]"></div>
-                    SEO Freelancers
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-[#8B92B3]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#39FF14]"></div>
-                    E-commerce Owners
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-[#8B92B3]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#39FF14]"></div>
-                    Solo Entrepreneurs
-                  </div>
-                </div>
-              </div>
-            </div>
+                  <h3 className="mt-4 text-xl font-bold text-[#111111]">{step.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-[#6E677D]">{step.description}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 bg-[#0F1635]/50 backdrop-blur-sm border-y border-[#1E2650]">
-        <div className="container mx-auto min-w-[1200px] max-w-7xl px-8">
-          <div className="text-center space-y-4 mb-16">
-            <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              Everything You Need to Find <span className="bg-gradient-to-r from-[#0080FF] to-[#39FF14] bg-clip-text text-transparent">Winning Keywords</span>
+      <section className="border-y border-[#E8E1F4] bg-white/55 py-18 backdrop-blur-sm sm:py-20">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <Badge className="border-[#E8E1F4] bg-white px-3 py-1 text-xs text-[#6E677D]">Core Features</Badge>
+            <h2 className="mt-5 text-4xl font-black tracking-tight text-[#111111] sm:text-5xl" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+              Three products. Two are free. One is paid.
             </h2>
-            <p className="text-xl text-[#8B92B3] max-w-2xl mx-auto font-light">
-              Powerful tools to discover, analyze, and capitalize on trending opportunities
+            <p className="mt-4 text-lg leading-8 text-[#6E677D]">
+              This is the cleanest way to explain NichePop: a free database for idea discovery, a free analysis tool for business judgment,
+              and a paid Reddit workflow for execution.
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card className="group border-[#1E2650] hover:border-[#0080FF] transition-all duration-300 hover:shadow-2xl hover:shadow-[#0080FF]/20 hover:-translate-y-2 cursor-pointer bg-[#0F1635]/80 backdrop-blur-sm">
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">
+            {toolCards.map((tool) => {
+              const Icon = tool.icon
+              return (
+                <Link key={tool.href} href={tool.href}>
+                  <Card className="h-full rounded-[1.9rem] border-[#E8E1F4] bg-white/92 transition-all hover:border-[#D8CCF2] hover:shadow-[0_22px_48px_rgba(125,76,230,0.08)]">
+                    <CardHeader>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <Badge className="border-[#E8E1F4] bg-[#F7F4FF] text-[#6E677D]">{tool.badge}</Badge>
+                          <CardTitle className="mt-4 text-2xl font-bold text-[#111111]">{tool.title}</CardTitle>
+                        </div>
+                        <div className={`rounded-[1rem] border border-[#E8E1F4] p-3 ${tool.iconTone}`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                      </div>
+                      <CardDescription className="text-sm leading-7 text-[#6E677D]">{tool.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3">
+                        {tool.bullets.map((bullet) => (
+                          <li key={bullet} className="flex gap-3 text-sm text-[#6E677D]">
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#43B86E]" />
+                            <span>{bullet}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-18 sm:py-20">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-4xl font-black tracking-tight text-[#111111] sm:text-5xl" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+              Why this structure converts better
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-[#6E677D]">
+              It gives away discovery and judgment for free, then charges only when users are ready to do repetitive Reddit marketing work.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">
+            {valueProps.map((item) => {
+              const Icon = item.icon
+              return (
+                <Card key={item.title} className="rounded-[1.9rem] border-[#E8E1F4] bg-white/88 shadow-[0_18px_40px_rgba(77,54,42,0.06)]">
+                  <CardHeader>
+                    <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-[1.2rem] ${item.iconTone}`}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <CardTitle className="text-xl font-bold text-[#111111]">{item.title}</CardTitle>
+                    <CardDescription className="text-sm leading-7 text-[#6E677D]">{item.description}</CardDescription>
+                  </CardHeader>
+                </Card>
+              )
+            })}
+          </div>
+
+          <div className="mt-12 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+            <Card className="rounded-[2rem] border-[#E8E1F4] bg-white/88 shadow-[0_18px_40px_rgba(77,54,42,0.06)]">
               <CardHeader>
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#0080FF] mb-4 shadow-lg shadow-[#0080FF]/50 group-hover:shadow-[#0080FF]/70 transition-all">
-                  <TrendingUp className="h-7 w-7 text-white" />
-                </div>
-                <CardTitle className="text-white text-xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Real-Time Trends</CardTitle>
-                <CardDescription className="text-[#8B92B3]">
-                  Track keyword trends as they happen with live data from Google and social platforms
-                </CardDescription>
+                <CardTitle className="text-2xl font-bold text-[#111111]">Who this fits best</CardTitle>
+                <CardDescription className="text-[#6E677D]">Built for lean teams that discover ideas fast, judge them fast, and execute in Reddit when they are serious.</CardDescription>
               </CardHeader>
+              <CardContent className="space-y-4">
+                {personas.map((persona) => (
+                  <div key={persona} className="flex gap-3 rounded-[1.35rem] border border-[#E8E1F4] bg-[#F7F4FF]/75 p-4">
+                    <Users className="mt-0.5 h-4 w-4 shrink-0 text-[#43B86E]" />
+                    <span className="text-sm text-[#6E677D]">{persona}</span>
+                  </div>
+                ))}
+              </CardContent>
             </Card>
 
-            <Card className="group border-[#1E2650] hover:border-[#39FF14] transition-all duration-300 hover:shadow-2xl hover:shadow-[#39FF14]/20 hover:-translate-y-2 cursor-pointer bg-[#0F1635]/80 backdrop-blur-sm">
+            <Card className="rounded-[2rem] border-[#E8E1F4] bg-white/88 shadow-[0_18px_40px_rgba(77,54,42,0.06)]">
               <CardHeader>
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#39FF14] mb-4 shadow-lg shadow-[#39FF14]/50 group-hover:shadow-[#39FF14]/70 transition-all">
-                  <Target className="h-7 w-7 text-[#0A0E27]" />
-                </div>
-                <CardTitle className="text-white text-xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Competition Analysis</CardTitle>
-                <CardDescription className="text-[#8B92B3]">
-                  Identify low-competition keywords with high search volume for maximum ROI
-                </CardDescription>
+                <CardTitle className="text-2xl font-bold text-[#111111]">What powers the product</CardTitle>
+                <CardDescription className="text-[#6E677D]">The free tools help you find and judge opportunities. The paid panel helps you execute on Reddit.</CardDescription>
               </CardHeader>
-            </Card>
-
-            <Card className="group border-[#1E2650] hover:border-[#0080FF] transition-all duration-300 hover:shadow-2xl hover:shadow-[#0080FF]/20 hover:-translate-y-2 cursor-pointer bg-[#0F1635]/80 backdrop-blur-sm">
-              <CardHeader>
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#0080FF] mb-4 shadow-lg shadow-[#0080FF]/50 group-hover:shadow-[#0080FF]/70 transition-all">
-                  <BarChart3 className="h-7 w-7 text-white" />
+              <CardContent className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-[1.35rem] border border-[#E8E1F4] bg-[#F7F4FF]/75 p-5">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-[1rem] bg-[#EAF6FF] text-[#1479D6]">
+                    <Database className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-semibold text-[#111111]">Ideas DB</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#6E677D]">A free database of opportunities pulled from search and conversation signals.</p>
                 </div>
-                <CardTitle className="text-white text-xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Profit Estimation</CardTitle>
-                <CardDescription className="text-[#8B92B3]">
-                  Calculate potential revenue with CPC data and search volume metrics
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="group border-[#1E2650] hover:border-[#39FF14] transition-all duration-300 hover:shadow-2xl hover:shadow-[#39FF14]/20 hover:-translate-y-2 cursor-pointer bg-[#0F1635]/80 backdrop-blur-sm">
-              <CardHeader>
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#39FF14] mb-4 shadow-lg shadow-[#39FF14]/50 group-hover:shadow-[#39FF14]/70 transition-all">
-                  <Search className="h-7 w-7 text-[#0A0E27]" />
+                <div className="rounded-[1.35rem] border border-[#E8E1F4] bg-[#F7F4FF]/75 p-5">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-[1rem] bg-[#F3EDFF] text-[#8B5CF6]">
+                    <MessageSquare className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-semibold text-[#111111]">Idea Analysis</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#6E677D]">A free commercial read on whether a specific idea has enough demand and room to matter.</p>
                 </div>
-                <CardTitle className="text-white text-xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>SERP Analysis</CardTitle>
-                <CardDescription className="text-[#8B92B3]">
-                  Analyze search results to understand what content ranks and why
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="group border-[#1E2650] hover:border-[#0080FF] transition-all duration-300 hover:shadow-2xl hover:shadow-[#0080FF]/20 hover:-translate-y-2 cursor-pointer bg-[#0F1635]/80 backdrop-blur-sm">
-              <CardHeader>
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#0080FF] mb-4 shadow-lg shadow-[#0080FF]/50 group-hover:shadow-[#0080FF]/70 transition-all">
-                  <Zap className="h-7 w-7 text-white" />
+                <div className="rounded-[1.35rem] border border-[#E8E1F4] bg-[#F7F4FF]/75 p-5">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-[1rem] bg-[#FFF7D8] text-[#D49A00]">
+                    <TrendingUp className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-semibold text-[#111111]">Reddit thread targeting</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#6E677D]">The paid panel surfaces which posts and communities deserve action right now.</p>
                 </div>
-                <CardTitle className="text-white text-xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Instant Insights</CardTitle>
-                <CardDescription className="text-[#8B92B3]">
-                  Get actionable insights in seconds with our AI-powered analysis engine
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="group border-[#1E2650] hover:border-[#39FF14] transition-all duration-300 hover:shadow-2xl hover:shadow-[#39FF14]/20 hover:-translate-y-2 cursor-pointer bg-[#0F1635]/80 backdrop-blur-sm">
-              <CardHeader>
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#39FF14] mb-4 shadow-lg shadow-[#39FF14]/50 group-hover:shadow-[#39FF14]/70 transition-all">
-                  <Sparkles className="h-7 w-7 text-[#0A0E27]" />
+                <div className="rounded-[1.35rem] border border-[#E8E1F4] bg-[#F7F4FF]/75 p-5">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-[1rem] bg-[#EAF6FF] text-[#1479D6]">
+                    <Link2 className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-semibold text-[#111111]">Lead follow-up</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#6E677D]">The paid workflow keeps track of who to reply to, who to revisit, and where the best leads are forming.</p>
                 </div>
-                <CardTitle className="text-white text-xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Opportunity Score</CardTitle>
-                <CardDescription className="text-[#8B92B3]">
-                  Proprietary scoring system to rank keywords by profit potential
-                </CardDescription>
-              </CardHeader>
+              </CardContent>
             </Card>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#0080FF]/10 rounded-full blur-3xl"></div>
+      <section className="relative overflow-hidden py-18 sm:py-20">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-1/2 h-[32rem] w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#7D4CE6]/10 blur-3xl" />
         </div>
-
-        <div className="container mx-auto min-w-[1200px] max-w-7xl px-8 relative z-10">
-          <Card className="border-2 border-[#0080FF]/30 bg-[#0F1635]/80 backdrop-blur-xl shadow-2xl shadow-[#0080FF]/20">
-            <CardContent className="p-12 text-center space-y-6">
-              <div className="flex justify-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#1E2650] bg-[#0A0E27]/80 shadow-2xl shadow-[#0080FF]/40">
-                  <BrandMark className="h-12 w-12" withGlow />
-                </div>
+        <div className="container relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Card className="overflow-hidden rounded-[2.2rem] border-[#E8E1F4] bg-[linear-gradient(135deg,#FFFFFF_0%,#F7F4FF_60%,#EFE9FF_100%)] shadow-[0_30px_80px_rgba(77,54,42,0.1)] backdrop-blur-xl">
+            <CardContent className="p-8 text-center sm:p-12">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[1.7rem] border border-[#E8E1F4] bg-white shadow-[0_0_40px_rgba(125,76,230,0.1)]">
+                <BrandMark className="h-11 w-11" withGlow />
               </div>
-              <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                Ready to Find Your <span className="bg-gradient-to-r from-[#0080FF] to-[#39FF14] bg-clip-text text-transparent">Next Opportunity?</span>
+              <h2 className="mt-8 text-4xl font-black tracking-tight text-[#111111] sm:text-5xl" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+                Start with the free tools.
+                <span className="block text-[#111111]">Upgrade when you want Reddit to become a real channel.</span>
               </h2>
-              <p className="text-xl text-[#8B92B3] max-w-2xl mx-auto font-light">
-                Join thousands of marketers and entrepreneurs discovering profitable keywords every day
+              <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-[#6E677D]">
+                Use Ideas DB to find angles worth exploring. Use Idea Analysis to see if they have business potential.
+                The paid panel is for doing the actual Reddit work.
               </p>
-              <Link href="/dashboard">
-                <Button
+              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                <TryFreeButton
+                  guestHref="/dashboard/ideas"
+                  authenticatedHref="/dashboard/ideas"
                   size="lg"
-                  className="bg-[#39FF14] hover:bg-[#39FF14]/90 text-[#0A0E27] font-bold text-lg px-10 py-6 rounded-xl hover:shadow-[0_0_30px_rgba(57,255,20,0.4)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+                  className="w-full rounded-full bg-[#111111] px-8 py-5 text-base font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#111111]/92 sm:w-auto"
                 >
-                  Try Free
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+                  Browse Ideas DB
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </TryFreeButton>
+                <Link href="/pricing">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full rounded-full border-[#E8E1F4] bg-white/75 px-8 py-5 text-base text-[#111111] hover:border-[#7D4CE6] hover:bg-[#F7F4FF] sm:w-auto"
+                  >
+                    See Reddit Pricing
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </div>
       </section>
 
-      {/* Footer */}
       <Footer />
     </div>
   )

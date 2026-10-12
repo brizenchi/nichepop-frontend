@@ -36,21 +36,21 @@ export function BrandMark({ className, withGlow = false }: BrandMarkProps) {
     <svg
       viewBox="0 0 44 44"
       aria-hidden="true"
-      className={cn("shrink-0", withGlow && "drop-shadow-[0_0_10px_rgba(0,128,255,0.45)]", className)}
+      className={cn("shrink-0", withGlow && "drop-shadow-[0_0_14px_rgba(125,76,230,0.22)]", className)}
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
         <linearGradient id={bgGradientId} x1="8" y1="5" x2="36" y2="39" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#0F1633" />
-          <stop offset="1" stopColor="#0A0E27" />
+          <stop offset="0" stopColor="#FFFFFF" />
+          <stop offset="1" stopColor="#F7F4FF" />
         </linearGradient>
         <linearGradient id={borderGradientId} x1="8" y1="6" x2="36" y2="38" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#0080FF" />
-          <stop offset="1" stopColor="#67F745" />
+          <stop offset="0" stopColor="#7D4CE6" />
+          <stop offset="1" stopColor="#BA87FF" />
         </linearGradient>
         <linearGradient id={lineGradientId} x1="11.5" y1="28.5" x2="32" y2="16.6" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#0080FF" />
-          <stop offset="1" stopColor="#67F745" />
+          <stop offset="0" stopColor="#1479D6" />
+          <stop offset="1" stopColor="#7D4CE6" />
         </linearGradient>
       </defs>
 
@@ -71,8 +71,8 @@ export function BrandMark({ className, withGlow = false }: BrandMarkProps) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="11.5" cy="28.5" r="1.4" fill="#0080FF" />
-      <circle cx="32" cy="16.6" r="1.8" fill="#67F745" />
+      <circle cx="11.5" cy="28.5" r="1.4" fill="#1479D6" />
+      <circle cx="32" cy="16.6" r="1.8" fill="#7D4CE6" />
     </svg>
   )
 }
@@ -90,7 +90,7 @@ export function BrandLogo({
       {showText && (
         <span
           className={cn(
-            "font-bold tracking-tight bg-gradient-to-r from-[#0080FF] to-[#67F745] bg-clip-text text-transparent",
+            "font-bold tracking-tight text-[#111111]",
             textSizes[size],
             textClassName,
           )}

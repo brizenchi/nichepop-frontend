@@ -2,8 +2,14 @@
 
 import type React from "react"
 import { useState } from "react"
-
-import { Zap, Crown, TrendingUp, Search, Eye, CheckCircle2, Mail, Loader2 } from "lucide-react"
+import {
+  FileSearch,
+  Lightbulb,
+  Loader2,
+  MessageSquare,
+  Users,
+  BookmarkCheck,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/useAuth"
@@ -16,10 +22,10 @@ interface Tier {
   monthlyPrice: number
   yearlyPrice: number
   description: string
-  features: Array<{ icon: any; text: string; disabled?: boolean }>
+  features: Array<{ icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; text: string }>
   cta: string
   popular: boolean
-  accent: string
+  accent: "zinc" | "indigo" | "amber"
   stripePriceIds?: {
     monthly: string
     yearly: string
@@ -35,56 +41,30 @@ const tiers: Tier[] = [
     name: "Free",
     monthlyPrice: 0,
     yearlyPrice: 0,
-    description: "Perfect for getting started",
+    description: "Use the two free tools first: browse opportunities in Ideas DB and run free idea analysis before you pay for execution.",
     features: [
-      { icon: TrendingUpIcon, text: "View 1 trending keyword daily" },
-      { icon: Search, text: "1 research per day" },
-      { icon: Eye, text: "Access to 1 trending keyword" },
+      { icon: Lightbulb, text: "Browse the free Ideas DB" },
+      { icon: FileSearch, text: "Run free Idea Analysis" },
+      { icon: Users, text: "Review source links and market evidence" },
     ],
-    cta: "Get Started Free",
+    cta: "Free Forever",
     popular: false,
     accent: "zinc",
   },
   {
-    name: "Pro",
-    monthlyPrice: 12.9,
-    yearlyPrice: 129, // Annual price with 17% discount
-    description: "Best for content creators",
+    name: "Reddit Marketing",
+    monthlyPrice: 49,
+    yearlyPrice: 490,
+    description: "For founders and small teams who are ready to turn Reddit into a repeatable acquisition workflow.",
     features: [
-      { icon: TrendingUp, text: "View all trending keywords" },
-      // { icon: Search, text: "20 researches per day" },
-      { icon: CheckCircle2, text: "Priority support" },
-      { icon: Zap, text: "Real-time data updates" },
-      { icon: TrendingUp, text: "Advanced analytics" },
+      { icon: MessageSquare, text: "Find relevant Reddit threads to target" },
+      { icon: FileSearch, text: "Get reply suggestions and post angles" },
+      { icon: Users, text: "Track potential leads from public discussions" },
+      { icon: BookmarkCheck, text: "Save your panel and keep follow-up running" },
     ],
-    cta: "Upgrade to Pro",
+    cta: "Unlock Reddit Marketing",
     popular: true,
     accent: "indigo",
-    stripePriceIds: {
-      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || "",
-      yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY || "",
-    },
-    stripeLinks: {
-      monthly: process.env.NEXT_PUBLIC_STRIPE_LINK_PRO_MONTHLY || "",
-      yearly: process.env.NEXT_PUBLIC_STRIPE_LINK_PRO_YEARLY || "",
-    },
-  },
-  {
-    name: "Premium",
-    monthlyPrice: 19.9,
-    yearlyPrice: 199, // Annual price with 17% discount
-    description: "For power users and teams",
-    features: [
-      { icon: Crown, text: "View all trending keywords" },
-      // { icon: Search, text: "50 researches per day" },
-      { icon: CheckCircle2, text: "Priority support" },
-      { icon: Zap, text: "Real-time data updates" },
-      { icon: TrendingUp, text: "Advanced analytics" },
-      { icon: Mail, text: "Email alerts for new opportunities" },
-    ],
-    cta: "Upgrade to Premium",
-    popular: false,
-    accent: "rose",
     stripePriceIds: {
       monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PREMIUM_MONTHLY || "",
       yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PREMIUM_YEARLY || "",
@@ -95,26 +75,6 @@ const tiers: Tier[] = [
     },
   },
 ]
-
-function TrendingUpIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-      <polyline points="16 7 22 7 22 13" />
-    </svg>
-  )
-}
 
 export function PricingCards() {
   const [isYearly, setIsYearly] = useState(false)
@@ -128,25 +88,14 @@ export function PricingCards() {
       return
     }
 
-    // Check if user is authenticated
     if (!isAuthenticated) {
       setLoginDialogOpen(true)
       return
     }
 
-    // Get the price ID based on billing period
     const priceId = isYearly ? tier.stripePriceIds?.yearly : tier.stripePriceIds?.monthly
 
-    console.log('🔍 Tier selected:', {
-      name: tier.name,
-      isYearly,
-      priceId,
-      hasPriceId: !!priceId,
-    })
-
-    // If no price ID, fall back to stripe link
     if (!priceId) {
-      console.warn('⚠️ No stripePriceId found, falling back to stripeLink')
       if (tier.stripeLinks) {
         const link = isYearly ? tier.stripeLinks.yearly : tier.stripeLinks.monthly
         window.location.href = link
@@ -154,47 +103,28 @@ export function PricingCards() {
       return
     }
 
-    console.log('✅ Using API to create checkout session')
-
     try {
       setLoading(true)
       setProcessingTier(tier.name)
 
-      // Build success and cancel URLs
       const baseUrl = window.location.origin
       const successUrl = `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`
       const cancelUrl = `${baseUrl}/pricing`
 
-      console.log('📤 Creating checkout session with:', {
-        price_id: priceId,
-        mode: 'subscription',
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-      })
-
-      // Call backend API to create Checkout Session
       const session = await stripeService.createCheckout({
         price_id: priceId,
-        mode: 'subscription',
+        mode: "subscription",
         success_url: successUrl,
         cancel_url: cancelUrl,
       })
 
-      console.log('✅ Checkout session created:', session)
-      console.log('🔍 Session URL:', session.url)
-      console.log('🔍 Session URL type:', typeof session.url)
-      console.log('🔍 Has URL:', !!session.url)
-
-      // Redirect to Stripe Checkout
       if (session.url) {
-        console.log('🚀 Redirecting to:', session.url)
         window.location.href = session.url
       } else {
-        console.error('❌ No URL in session:', session)
-        throw new Error('No checkout URL returned from server')
+        throw new Error("No checkout URL returned from server")
       }
     } catch (error) {
-      console.error('❌ Failed to create checkout session:', error)
+      console.error("Failed to create checkout session:", error)
       toast({
         title: "Payment Error",
         description: "Failed to start payment process. Please try again.",
@@ -207,14 +137,15 @@ export function PricingCards() {
 
   return (
     <>
-      {/* Billing Toggle */}
       <div className="mb-8 flex items-center justify-center gap-4">
-        <span className={cn("text-sm font-medium transition-colors", !isYearly ? "text-white" : "text-[#8B92B3]")}>Monthly</span>
+        <span className={cn("text-sm font-medium transition-colors", !isYearly ? "text-[#111111]" : "text-[#6E677D]")}>
+          Monthly
+        </span>
         <button
           onClick={() => setIsYearly(!isYearly)}
           className={cn(
-            "relative inline-flex h-6 w-11 items-center rounded-full transition-colors border",
-            isYearly ? "bg-[#0ea5e9] border-[#0ea5e9]" : "bg-[#1E2650] border-[#3E4670]",
+            "relative inline-flex h-6 w-11 items-center rounded-full border transition-colors",
+            isYearly ? "border-[#7D4CE6] bg-[#7D4CE6]" : "border-[#D8CCF2] bg-white",
           )}
         >
           <span
@@ -224,90 +155,87 @@ export function PricingCards() {
             )}
           />
         </button>
-        <span className={cn("text-sm font-medium transition-colors", isYearly ? "text-white" : "text-[#8B92B3]")}>
-          Yearly <span className="text-[#10b981]">(Save 17%)</span>
+        <span className={cn("text-sm font-medium transition-colors", isYearly ? "text-[#111111]" : "text-[#6E677D]")}>
+          Yearly <span className="text-[#43B86E]">(Save 17%)</span>
         </span>
       </div>
 
-      {/* Pricing Cards */}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         {tiers.map((tier) => {
           const price = isYearly ? tier.yearlyPrice : tier.monthlyPrice
           const originalPrice = isYearly ? tier.monthlyPrice * 12 : tier.monthlyPrice
           const period = isYearly ? "/year" : "/month"
           const showDiscount = isYearly && tier.yearlyPrice > 0
 
+          const accentClasses = {
+            zinc: "text-[#111111]",
+            indigo: "text-[#7D4CE6]",
+            amber: "text-[#D49A00]",
+          }
+
+          const buttonClasses = {
+            zinc: "bg-[#111111] hover:bg-[#111111]/92 text-white",
+            indigo: "bg-[#7D4CE6] hover:bg-[#7043D6] text-white",
+            amber: "bg-[#D49A00] hover:bg-[#BC8B00] text-white",
+          }
+
+          const surfaceClasses = {
+            zinc: "bg-white",
+            indigo: "bg-[#F3EDFF]",
+            amber: "bg-[#FFF7D8]",
+          }
+
           return (
             <div
               key={tier.name}
               className={cn(
-                "relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300",
+                "relative flex flex-col rounded-3xl border p-6 shadow-[0_18px_40px_rgba(77,54,42,0.06)] transition-all duration-300",
+                surfaceClasses[tier.accent],
                 tier.popular
-                  ? "border-[#0ea5e9] shadow-lg shadow-[#0ea5e9]/20 scale-105"
-                  : "border-border hover:border-muted-foreground/50",
+                  ? "scale-[1.02] border-[#7D4CE6] shadow-lg shadow-[#7D4CE6]/15"
+                  : "border-[#E8E1F4] hover:border-[#D8CCF2]",
               )}
             >
               {tier.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="rounded-full bg-[#0ea5e9] px-3 py-1 text-xs font-semibold text-white">
+                  <span className="rounded-full bg-[#7D4CE6] px-3 py-1 text-xs font-semibold text-white">
                     Most Popular
                   </span>
                 </div>
               )}
 
               {showDiscount && (
-                <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
-                  <span className="text-sm font-bold text-[#10b981] bg-[#10b981]/10 dark:bg-[#10b981]/20 px-3 py-1.5 rounded-full whitespace-nowrap">
+                <div className="absolute right-4 top-4 flex flex-col items-end gap-1">
+                  <span className="rounded-full bg-[#43B86E]/10 px-3 py-1.5 text-sm font-bold text-[#43B86E]">
                     Save 17%
                   </span>
-                  <span className="text-xs text-muted-foreground/60 line-through">
-                    ${originalPrice.toFixed(2)}
-                  </span>
+                  <span className="text-xs text-[#6E677D] line-through">${originalPrice.toFixed(2)}</span>
                 </div>
               )}
 
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-foreground">{tier.name}</h3>
-                <div className="mt-4">
-                  <div className="flex items-baseline">
-                    <span
-                      className={cn(
-                        "font-mono text-4xl font-bold",
-                        tier.accent === "indigo" && "text-[#0ea5e9]",
-                        tier.accent === "rose" && "text-[#f43f5e]",
-                        tier.accent === "zinc" && "text-foreground",
-                      )}
-                    >
-                      ${price.toFixed(price === 0 ? 0 : 2)}
-                    </span>
-                    <span className="ml-1 text-sm text-muted-foreground">{period}</span>
-                  </div>
+                <h3 className="text-lg font-semibold text-[#111111]">{tier.name}</h3>
+                <div className="mt-4 flex items-baseline">
+                  <span className={cn("font-mono text-4xl font-bold", accentClasses[tier.accent])}>
+                    ${price.toFixed(price === 0 ? 0 : 2)}
+                  </span>
+                  <span className="ml-1 text-sm text-[#6E677D]">{period}</span>
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">{tier.description}</p>
+                <p className="mt-3 text-sm leading-7 text-[#6E677D]">{tier.description}</p>
               </div>
 
               <ul className="mb-6 flex-1 space-y-3">
-                {tier.features.map((feature, idx) => (
-                  <li
-                    key={idx}
-                    className={cn(
-                      "flex items-start gap-3 text-sm",
-                      feature.disabled ? "text-muted-foreground/50" : "text-muted-foreground",
-                    )}
-                  >
+                {tier.features.map((feature) => (
+                  <li key={feature.text} className="flex items-start gap-3 text-sm text-[#6E677D]">
                     <feature.icon
                       className={cn(
                         "mt-0.5 h-4 w-4 shrink-0",
-                        feature.disabled
-                          ? "text-muted-foreground/50"
-                          : tier.accent === "indigo"
-                            ? "text-[#0ea5e9]"
-                            : tier.accent === "rose"
-                              ? "text-[#f43f5e]"
-                              : "text-[#10b981]",
+                        tier.accent === "zinc" && "text-[#111111]",
+                        tier.accent === "indigo" && "text-[#7D4CE6]",
+                        tier.accent === "amber" && "text-[#D49A00]",
                       )}
                     />
-                    <span className={feature.disabled ? "line-through" : ""}>{feature.text}</span>
+                    <span>{feature.text}</span>
                   </li>
                 ))}
               </ul>
@@ -316,16 +244,14 @@ export function PricingCards() {
                 onClick={() => handleUpgrade(tier)}
                 disabled={tier.name === "Free" || loading}
                 className={cn(
-                  "w-full font-semibold cursor-pointer transition-all duration-200",
-                  tier.popular
-                    ? "bg-[#0ea5e9] hover:bg-[#0284c7] text-white"
-                    : "bg-secondary hover:bg-secondary/80",
-                  tier.name === "Free" && "cursor-default opacity-70"
+                  "w-full font-semibold transition-all duration-200",
+                  buttonClasses[tier.accent],
+                  tier.name === "Free" && "cursor-default opacity-75",
                 )}
               >
                 {loading && processingTier === tier.name ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Processing...
                   </>
                 ) : (

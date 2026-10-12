@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { TrendingUp, Search, Bookmark, Settings, CreditCard, User, Rss } from "lucide-react"
+import { TrendingUp, CreditCard, User, Rss } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useAuth } from "@/hooks/useAuth"
@@ -12,8 +12,8 @@ import { UserMenu } from "@/components/user-menu"
 import { BrandMark } from "@/components/brand-logo"
 
 const navItems = [
-  { icon: TrendingUp, label: "Dashboard", href: "/dashboard" },
-  { icon: Rss, label: "Live Feed", href: "/dashboard/live-feed" },
+  { icon: TrendingUp, label: "Reddit Panel", href: "/dashboard" },
+  { icon: Rss, label: "Reddit Feed", href: "/dashboard/live-feed" },
   { icon: CreditCard, label: "Pricing", href: "/pricing" },
 ]
 

@@ -31,7 +31,7 @@ export function OrganizationSchema() {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'NichePop',
-    description: 'Discover trending keyword opportunities with real-time data from Reddit, Google Trends & more.',
+    description: 'Discover startup ideas, validate them with evidence, and monitor real user conversations.',
     url: siteOrigin,
     logo: `${siteOrigin}/icon.svg`,
     sameAs: [
@@ -56,7 +56,7 @@ export function WebApplicationSchema() {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name: 'NichePop',
-    description: 'Keyword research and niche discovery tool with real-time trend analysis',
+    description: 'Founder workflow software for idea discovery, validation, and product monitoring',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Any',
     url: siteOrigin,
@@ -74,12 +74,12 @@ export function WebApplicationSchema() {
       worstRating: '1',
     },
     featureList: [
-      'Real-time keyword trend tracking',
-      'Competition analysis',
-      'Profit estimation with CPC data',
-      'SERP analysis',
-      'AI-powered insights',
-      'Opportunity scoring system',
+      'Free idea library',
+      'Paid validation reports',
+      'Cross-platform signal aggregation',
+      'Source-backed pain point research',
+      'Product monitoring alerts',
+      'Direct links to user conversations',
     ],
   }
 

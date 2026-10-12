@@ -67,22 +67,48 @@ const blogPosts = [
 
 export default function BlogPage() {
   return (
-    <div className="min-h-screen bg-[#0A0E27]">
+    <div className="min-h-screen bg-transparent">
       <Navbar />
 
-      <main className="pt-24 pb-20 px-4 sm:px-6 lg:px-8">
+      <main className="relative overflow-hidden bg-[#FAFAFA] pt-24 pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute inset-0 bg-[#FAFAFA]" />
+          <div className="absolute top-24 right-[-4rem] hidden h-52 w-52 rounded-full bg-[#F3F600]/28 lg:block" />
+          <div className="absolute top-40 left-2 hidden h-48 w-20 overflow-hidden bg-[#FFECE2]/78 lg:block">
+            <div
+              className="absolute inset-0 opacity-75"
+              style={{
+                backgroundImage:
+                  "repeating-radial-gradient(ellipse at 24% 28%, transparent 0 12px, rgba(255,255,255,0.38) 13px 14px, transparent 15px 27px), repeating-radial-gradient(ellipse at 72% 66%, transparent 0 14px, rgba(255,255,255,0.34) 15px 16px, transparent 17px 31px)",
+                backgroundSize: "180px 220px, 210px 180px",
+                backgroundPosition: "-46px -28px, -74px 26px",
+              }}
+            />
+          </div>
+          <div className="absolute right-5 top-48 hidden h-56 w-20 overflow-hidden bg-[#F7B6D8]/72 lg:block">
+            <div
+              className="absolute inset-0 opacity-58"
+              style={{
+                backgroundImage:
+                  "linear-gradient(62deg, transparent 0 37%, rgba(255,255,255,0.26) 38% 45%, transparent 46% 100%), linear-gradient(-62deg, transparent 0 37%, rgba(255,255,255,0.24) 38% 45%, transparent 46% 100%), repeating-linear-gradient(62deg, rgba(218,74,154,0.12) 0 1px, transparent 1px 36px), repeating-linear-gradient(-62deg, rgba(218,74,154,0.11) 0 1px, transparent 1px 36px)",
+                backgroundSize: "54px 68px, 54px 68px, 54px 68px, 54px 68px",
+              }}
+            />
+          </div>
+          <div className="absolute inset-x-0 top-0 h-40 bg-[linear-gradient(rgba(17,17,17,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(17,17,17,0.04)_1px,transparent_1px)] [mask-image:linear-gradient(to_bottom,black_0%,rgba(0,0,0,0.45)_55%,transparent_100%)] bg-[size:34px_34px] opacity-45" />
+        </div>
         <div className="container mx-auto max-w-6xl">
           {/* Header */}
           <div className="text-center space-y-6 mb-16">
-            <Badge className="bg-[#0F1635] text-[#39FF14] border-[#1E2650] px-4 py-1.5 backdrop-blur-sm">
+            <Badge className="bg-[#F7F4FF] text-[#7D4CE6] border-[#E8E1F4] px-4 py-1.5 backdrop-blur-sm">
               Blog
             </Badge>
 
-            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-[#111111]" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
               Keyword Research Tips & Guides
             </h1>
 
-            <p className="text-lg sm:text-xl text-[#8B92B3] max-w-2xl mx-auto leading-relaxed font-light">
+            <p className="text-lg sm:text-xl text-[#6E677D] max-w-2xl mx-auto leading-relaxed font-light">
               Expert insights on finding profitable keywords, analyzing competition, and discovering trending niches
             </p>
           </div>
@@ -91,26 +117,26 @@ export default function BlogPage() {
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
             {blogPosts.map((post) => (
               <Link key={post.slug} href={`/blog/${post.slug}`}>
-                <Card className="h-full border-[#1E2650] hover:border-[#0080FF] transition-all duration-300 hover:shadow-2xl hover:shadow-[#0080FF]/20 hover:-translate-y-2 cursor-pointer bg-[#0F1635]/80 backdrop-blur-sm">
+                <Card className="h-full cursor-pointer border-[#E8E1F4] bg-white transition-all duration-300 hover:-translate-y-2 hover:border-[#D8CCF2] hover:shadow-[0_24px_48px_rgba(77,54,42,0.08)]">
                   <CardHeader>
                     <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="outline" className="text-xs border-[#1E2650] text-[#39FF14]">
+                      <Badge variant="outline" className="text-xs border-[#E8E1F4] text-[#7D4CE6]">
                         {post.category}
                       </Badge>
-                      <span className="text-xs text-[#8B92B3] flex items-center gap-1">
+                      <span className="text-xs text-[#6E677D] flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {post.readTime}
                       </span>
                     </div>
-                    <CardTitle className="text-xl mb-2 text-white hover:text-[#0080FF] transition-colors" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                    <CardTitle className="text-xl mb-2 text-[#111111] hover:text-[#1479D6] transition-colors" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                       {post.title}
                     </CardTitle>
-                    <CardDescription className="text-sm leading-relaxed text-[#8B92B3]">
+                    <CardDescription className="text-sm leading-relaxed text-[#6E677D]">
                       {post.description}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center justify-between text-xs text-[#8B92B3]">
+                    <div className="flex items-center justify-between text-xs text-[#6E677D]">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {new Date(post.publishedAt).toLocaleDateString('en-US', {
@@ -119,7 +145,7 @@ export default function BlogPage() {
                           year: 'numeric',
                         })}
                       </div>
-                      <div className="flex items-center gap-1 text-[#0080FF]">
+                      <div className="flex items-center gap-1 text-[#1479D6]">
                         Read more
                         <ArrowRight className="h-3 w-3" />
                       </div>
@@ -132,16 +158,16 @@ export default function BlogPage() {
 
           {/* CTA Section */}
           <div className="mt-20 text-center">
-            <Card className="border-2 border-[#0080FF]/30 bg-[#0F1635]/80 backdrop-blur-xl shadow-2xl shadow-[#0080FF]/20">
+            <Card className="border-2 border-[#D8CCF2] bg-[linear-gradient(180deg,#FFFFFF_0%,#F7F4FF_50%,#EFE9FF_100%)] shadow-[0_24px_56px_rgba(77,54,42,0.1)]">
               <CardContent className="p-12 space-y-6">
-                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[#111111]" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                   Ready to Find Your Next Keyword Opportunity?
                 </h2>
-                <p className="text-[#8B92B3] max-w-2xl mx-auto font-light">
+                <p className="text-[#6E677D] max-w-2xl mx-auto font-light">
                   Put these strategies into action with NichePop's real-time keyword research tool
                 </p>
                 <Link href="/dashboard">
-                  <Button size="lg" className="bg-[#39FF14] hover:bg-[#39FF14] text-[#0A0E27] font-bold text-lg px-10 py-6 rounded-xl hover:shadow-[0_0_30px_rgba(57,255,20,0.4)] hover:-translate-y-0.5 transition-all duration-200">
+                  <Button size="lg" className="rounded-full bg-[#111111] px-10 py-6 text-lg font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#111111]/92 hover:shadow-[0_18px_34px_rgba(17,17,17,0.14)]">
                     Start Exploring Keywords
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>

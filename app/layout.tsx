@@ -27,19 +27,19 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   title: {
-    default: "NichePop - Low Competition Keyword Research Tool",
+    default: "NichePop - Free Ideas DB, Free Idea Analysis, Paid Reddit Marketing",
     template: "%s | NichePop",
   },
-  description: "Discover low-competition keywords with real-time trend signals from Reddit and Google Trends. Built for bloggers, creators, and lean SEO teams.",
+  description: "Browse opportunities in a free Ideas DB, run free idea analysis, and upgrade only when you want a Reddit marketing panel with threads, reply ideas, and lead follow-up.",
   keywords: [
-    "trending keywords",
-    "profitable niches",
-    "keyword research",
-    "real-time insights",
-    "low-competition keywords",
-    "AI analysis",
-    "Reddit discussions",
-    "niche discovery"
+    "ideas database",
+    "startup opportunity database",
+    "idea analysis tool",
+    "business opportunity analysis",
+    "reddit marketing tool",
+    "reddit lead generation",
+    "founder research workflow",
+    "indie hacker tools",
   ],
   authors: [{ name: "NichePop" }],
   creator: "NichePop",
@@ -66,20 +66,20 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    title: 'NichePop - Low Competition Keyword Research Tool',
-    description: 'Find trending keyword opportunities with real-time data and competition signals.',
+    title: 'NichePop - Free Ideas DB, Free Idea Analysis, Paid Reddit Marketing',
+    description: 'Use the free Ideas DB and free idea analysis first. Pay only for the Reddit marketing panel when you need execution.',
     siteName: 'NichePop',
     images: [{
       url: '/og-image.png',
       width: 1200,
       height: 630,
-      alt: 'NichePop - Keyword Research Tool',
+      alt: 'NichePop founder workflow',
     }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'NichePop - Low Competition Keyword Research Tool',
-    description: 'Find low-competition keyword opportunities faster with real-time trend data.',
+    title: 'NichePop - Free Ideas DB, Free Idea Analysis, Paid Reddit Marketing',
+    description: 'Use the free Ideas DB and free idea analysis first. Pay only for the Reddit marketing panel when you need execution.',
     images: ['/twitter-image.png'],
     creator: '@nichepop',
   },
@@ -109,12 +109,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
       </head>
-      <body className={`${inter.className} ${jetbrainsMono.variable} font-sans antialiased`}>
+      <body className={`${inter.className} ${jetbrainsMono.variable} bg-background font-sans text-foreground antialiased`}>
         <AuthProvider>
           {children}
           <Analytics />

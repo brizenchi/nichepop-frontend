@@ -8,29 +8,26 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-[#1E2650] bg-[#0A0E27]/95 backdrop-blur-sm min-h-[400px]">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Main Footer Content */}
+    <footer className="relative isolate overflow-hidden bg-[linear-gradient(180deg,#FFFFFF_0%,#F7F4FF_48%,#EFE9FF_100%)] text-[#111111]">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(rgba(125,76,230,0.055)_1px,transparent_1px),linear-gradient(90deg,rgba(125,76,230,0.045)_1px,transparent_1px)] bg-[size:48px_48px]" />
+      <div className="container relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="py-12 lg:py-16">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
-            {/* Brand Section */}
             <div className="lg:col-span-4">
-              <Link href="/" className="flex items-center gap-2 group mb-4">
+              <Link href="/" className="group mb-4 flex items-center gap-2">
                 <BrandLogo
                   size="lg"
-                  markClassName="transition-all duration-200 group-hover:drop-shadow-[0_0_12px_rgba(103,247,69,0.5)]"
+                  markClassName="transition-all duration-200 group-hover:drop-shadow-[0_0_12px_rgba(125,76,230,0.24)]"
                   textClassName="font-black"
                 />
               </Link>
-              <p className="text-sm text-[#8B92B3] leading-relaxed mb-6 max-w-sm">
-                Discover trending keyword opportunities with real-time data. AI-powered niche analysis, competition insights, and profit estimation for marketers and entrepreneurs.
+              <p className="mb-6 max-w-sm text-sm leading-relaxed text-[#6E677D]">
+                NichePop gives you three clear jobs: browse opportunities in Ideas DB for free, analyze any idea's business potential for free, then upgrade when you want a Reddit marketing workflow that keeps running.
               </p>
-              {/* Social Links */}
               <div className="flex items-center gap-3">
-                
                 <a
                   href="mailto:support@nichepop.app"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0F1629] border border-[#1E2650] text-[#8B92B3] hover:text-[#67f745] hover:border-[#67f745]/50 transition-all duration-200"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E8E1F4] bg-white/90 text-[#6E677D] transition-all duration-200 hover:border-[#7D4CE6]/30 hover:text-[#7D4CE6]"
                   aria-label="Email us"
                 >
                   <Mail className="h-4 w-4" />
@@ -38,105 +35,94 @@ export function Footer() {
               </div>
             </div>
 
-            {/* Product Links */}
             <div className="lg:col-span-2">
-              <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Product</h3>
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-[#111111]">Product</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
+                  <Link href="/" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
                     Home
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
-                    Dashboard
+                  <Link href="/dashboard" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
+                    Reddit Marketing
                   </Link>
                 </li>
                 <li>
-                  <Link href="/pricing" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
+                  <Link href="/pricing" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
                     Pricing
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#features" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
-                    Features
+                  <Link href="/blog" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
+                    Blog
                   </Link>
                 </li>
               </ul>
             </div>
 
-            {/* Resources Links */}
             <div className="lg:col-span-2">
-              <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Resources</h3>
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-[#111111]">Core Features</h3>
               <ul className="space-y-3">
-               
                 <li>
-                  <Link href="/blog/how-to-find-low-competition-keywords" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
-                    Find Low Competition Keywords
+                  <Link href="/dashboard/ideas" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
+                    Ideas DB
                   </Link>
                 </li>
                 <li>
-                  <Link href="/blog/estimate-keyword-profitability" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
-                    Estimate Keyword Profitability
+                  <Link href="/dashboard/validate" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
+                    Idea Analysis
                   </Link>
                 </li>
                 <li>
-                  <Link href="/blog/keyword-opportunity-score-explained" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
-                    Opportunity Score Guide
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/blog/nichepop-vs-ahrefs-comparison" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
-                    NichePop vs Ahrefs
+                  <Link href="/dashboard/monitor" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
+                    Reddit Marketing Panel
                   </Link>
                 </li>
               </ul>
             </div>
 
-            
-
-            {/* Use Cases Links */}
             <div className="lg:col-span-2">
-              <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Use Cases</h3>
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-[#111111]">Fit</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/use-cases/bloggers" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
-                    For Bloggers
+                  <Link href="/use-cases/bloggers" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
+                    Indie Hackers
                   </Link>
                 </li>
                 <li>
-                  <Link href="/use-cases/content-creators" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
-                    Content Creators
+                  <Link href="/use-cases/content-creators" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
+                    SaaS Founders
                   </Link>
                 </li>
                 <li>
-                  <Link href="/use-cases/ecommerce" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
-                    E-commerce
+                  <Link href="/use-cases/ecommerce" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
+                    Product Builders
                   </Link>
                 </li>
                 <li>
-                  <Link href="/use-cases/affiliate-marketing" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
-                    Affiliate Marketing
+                  <Link href="/use-cases/affiliate-marketing" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
+                    Growth Teams
                   </Link>
                 </li>
               </ul>
             </div>
-{/* Company Links */}
+
             <div className="lg:col-span-2">
-              <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Company</h3>
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-[#111111]">Company</h3>
               <ul className="space-y-3">
                 <li>
-                  <a href="mailto:support@nichepop.app" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
+                  <a href="mailto:support@nichepop.app" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
                     Contact Us
                   </a>
                 </li>
                 <li>
-                  <Link href="/privacy" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
+                  <Link href="/privacy" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="text-sm text-[#8B92B3] hover:text-[#67f745] transition-colors duration-200">
+                  <Link href="/terms" className="text-sm text-[#6E677D] transition-colors duration-200 hover:text-[#7D4CE6]">
                     Terms of Service
                   </Link>
                 </li>
@@ -145,15 +131,14 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-[#1E2650] py-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-[#8B92B3] text-center sm:text-left">
-              © {currentYear} NichePop. All rights reserved.
-            </p>
-            
+        <div className="border-t border-[#E8E1F4] py-6">
+          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+            <p className="text-center text-sm text-[#6E677D] sm:text-left">© {currentYear} NichePop. All rights reserved.</p>
           </div>
         </div>
+      </div>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-0 text-center text-[clamp(5rem,18vw,14rem)] font-black tracking-[-0.06em] text-[#7D4CE6]/[0.07]">
+        nichepop
       </div>
     </footer>
   )

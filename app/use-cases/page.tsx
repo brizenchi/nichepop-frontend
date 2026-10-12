@@ -65,22 +65,22 @@ const useCases = [
 
 export default function UseCasesPage() {
   return (
-    <div className="min-h-screen bg-[#0A0E27]">
+    <div className="min-h-screen bg-transparent">
       <Navbar />
 
       <main className="pt-24 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-6xl">
           {/* Header */}
           <div className="text-center space-y-6 mb-16">
-            <Badge className="bg-[#0F1635] text-[#39FF14] border-[#1E2650] px-4 py-1.5 backdrop-blur-sm">
+            <Badge className="bg-[#F7F4FF] text-[#7D4CE6] border-[#E8E1F4] px-4 py-1.5 backdrop-blur-sm">
               Use Cases
             </Badge>
 
-            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-[#111111]" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
               Keyword Research for Every Industry
             </h1>
 
-            <p className="text-lg sm:text-xl text-[#8B92B3] max-w-2xl mx-auto leading-relaxed font-light">
+            <p className="text-lg sm:text-xl text-[#6E677D] max-w-2xl mx-auto leading-relaxed font-light">
               See how professionals across different industries use NichePop to discover profitable keywords and trending opportunities
             </p>
           </div>
@@ -91,29 +91,29 @@ export default function UseCasesPage() {
               const Icon = useCase.icon
               return (
                 <Link key={useCase.slug} href={`/use-cases/${useCase.slug}`}>
-                  <Card className="h-full border-[#1E2650] hover:border-[#0080FF] transition-all duration-300 hover:shadow-2xl hover:shadow-[#0080FF]/20 hover:-translate-y-2 cursor-pointer bg-[#0F1635]/80 backdrop-blur-sm">
+                  <Card className="h-full border-[#E8E1F4] hover:border-[#7D4CE6] transition-all duration-300 hover:shadow-2xl hover:shadow-[rgba(125,76,230,0.12)] hover:-translate-y-2 cursor-pointer bg-[#F7F4FF]/80 backdrop-blur-sm">
                     <CardHeader>
                       <div className={`flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br ${useCase.color} mb-4 shadow-lg`}>
-                        <Icon className="h-6 w-6 text-white" />
+                        <Icon className="h-6 w-6 text-[#111111]" />
                       </div>
-                      <CardTitle className="text-xl text-white hover:text-[#0080FF] transition-colors" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                      <CardTitle className="text-xl text-[#111111] hover:text-[#1479D6] transition-colors" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                         {useCase.title}
                       </CardTitle>
-                      <CardDescription className="text-sm leading-relaxed text-[#8B92B3]">
+                      <CardDescription className="text-sm leading-relaxed text-[#6E677D]">
                         {useCase.description}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-2">
                         {useCase.benefits.slice(0, 3).map((benefit, index) => (
-                          <li key={index} className="text-sm text-[#8B92B3] flex items-start gap-2">
-                            <span className="text-[#39FF14]">✓</span>
+                          <li key={index} className="text-sm text-[#6E677D] flex items-start gap-2">
+                            <span className="text-[#7D4CE6]">✓</span>
                             <span>{benefit}</span>
                           </li>
                         ))}
                       </ul>
                       <div className="mt-6">
-                        <Button variant="outline" className="w-full border-[#1E2650] bg-transparent text-white hover:bg-[#0080FF]/10 hover:border-[#0080FF]">
+                        <Button variant="outline" className="w-full border-[#E8E1F4] bg-transparent text-[#111111] hover:bg-[#F3EDFF] hover:border-[#7D4CE6]">
                           Learn More
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
@@ -126,21 +126,21 @@ export default function UseCasesPage() {
           </div>
 
           {/* CTA Section */}
-          <Card className="border-2 border-[#0080FF]/30 bg-[#0F1635]/80 backdrop-blur-xl shadow-2xl shadow-[#0080FF]/20">
+          <Card className="border-2 border-[#D8CCF2] bg-[#F7F4FF]/80 backdrop-blur-xl shadow-2xl shadow-[rgba(125,76,230,0.12)]">
             <CardContent className="p-12 text-center space-y-6">
-              <h2 className="text-3xl font-black tracking-tight text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              <h2 className="text-3xl font-black tracking-tight text-[#111111]" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                 Start Finding Keywords for Your Industry
               </h2>
-              <p className="text-lg text-[#8B92B3] max-w-2xl mx-auto font-light">
+              <p className="text-lg text-[#6E677D] max-w-2xl mx-auto font-light">
                 No matter your industry or niche, NichePop helps you discover profitable keyword opportunities
               </p>
               <Link href="/dashboard">
-                <Button size="lg" className="bg-[#39FF14] hover:bg-[#39FF14] text-[#0A0E27] font-bold text-lg px-10 py-6 rounded-xl hover:shadow-[0_0_30px_rgba(57,255,20,0.4)] hover:-translate-y-0.5 transition-all duration-200">
+                <Button size="lg" className="bg-[#111111] hover:bg-[#111111] text-white font-bold text-lg px-10 py-6 rounded-xl hover:shadow-[0_0_30px_rgba(57,255,20,0.4)] hover:-translate-y-0.5 transition-all duration-200">
                   Start Free
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <p className="text-sm text-[#8B92B3]">
+              <p className="text-sm text-[#6E677D]">
                 Free forever • No credit card required
               </p>
             </CardContent>

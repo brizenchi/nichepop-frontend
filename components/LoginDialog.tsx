@@ -137,11 +137,11 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
 
   return (
     <div className="fixed inset-0 z-50 grid min-h-screen place-items-center bg-black/60 px-4 text-left backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-[32px] border border-[#1E2650] bg-[#0F1635] text-white shadow-[0_30px_80px_rgba(0,128,255,0.2)]">
+      <div className="relative w-full max-w-2xl overflow-hidden rounded-[32px] border border-[#E8E1F4] bg-[linear-gradient(180deg,#FFFFFF_0%,#F7F4FF_46%,#EFE9FF_100%)] text-[#111111] shadow-[0_30px_80px_rgba(77,54,42,0.12)]">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-full bg-[#1E2650] p-2 text-[#8B92B3] transition hover:bg-[#0080FF]/20 hover:text-white cursor-pointer"
+          className="absolute right-4 top-4 rounded-full bg-white/90 p-2 text-[#6E677D] transition hover:bg-[#F7F4FF] hover:text-[#111111] cursor-pointer"
           aria-label="Close login dialog"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -151,19 +151,18 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
         </button>
         <div className="space-y-6 px-8 py-9">
           <div className="space-y-3 text-center">
-            <h2 className="text-3xl font-semibold text-white">Welcome to NichePop!</h2>
-            <p className="text-sm text-[#8B92B3]">Choose your preferred sign-in method</p>
+            <h2 className="text-3xl font-semibold text-[#111111]">Welcome to NichePop!</h2>
+            <p className="text-sm text-[#6E677D]">Sign in to save ideas, run validations, and monitor product signals</p>
           </div>
 
-          {/* Login Method Tabs */}
-          <div className="flex gap-2 rounded-full bg-[#0A0E27] border border-[#1E2650] p-1">
+          <div className="flex gap-2 rounded-full bg-white/80 border border-[#E8E1F4] p-1 shadow-[0_10px_24px_rgba(125,76,230,0.06)]">
             <button
               type="button"
               onClick={() => setLoginMethod('google')}
               className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition cursor-pointer ${
                 loginMethod === 'google'
-                  ? 'bg-[#0080FF] text-white shadow-lg shadow-[#0080FF]/30'
-                  : 'text-[#8B92B3] hover:text-white'
+                  ? 'bg-[#7D4CE6] text-white shadow-lg shadow-[#7D4CE6]/20'
+                  : 'text-[#6E677D] hover:text-[#111111]'
               }`}
             >
               Google
@@ -173,8 +172,8 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
               onClick={() => setLoginMethod('email')}
               className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition cursor-pointer ${
                 loginMethod === 'email'
-                  ? 'bg-[#0080FF] text-white shadow-lg shadow-[#0080FF]/30'
-                  : 'text-[#8B92B3] hover:text-white'
+                  ? 'bg-[#7D4CE6] text-white shadow-lg shadow-[#7D4CE6]/20'
+                  : 'text-[#6E677D] hover:text-[#111111]'
               }`}
             >
               Email
@@ -183,29 +182,29 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
 
           {loginMethod === 'google' ? (
             <>
-              <div className="rounded-[24px] border border-[#1E2650] bg-[#0A0E27]/50 p-6">
-                <p className="text-xs uppercase tracking-[0.3em] text-[#8B92B3]">Why sign in</p>
-                <ul className="mt-4 space-y-3 text-sm text-white">
-                  {['Save your searches', 'Track keyword trends', 'Access premium features'].map(feature => (
+              <div className="rounded-[24px] border border-[#E8E1F4] bg-white/82 p-6">
+                <p className="text-xs uppercase tracking-[0.3em] text-[#7D7590]">Why sign in</p>
+                <ul className="mt-4 space-y-3 text-sm text-[#111111]">
+                  {['Save promising ideas', 'Unlock validation reports', 'Access monitoring workflows'].map(feature => (
                     <li
                       key={feature}
-                      className="flex items-center gap-3 rounded-2xl border border-[#1E2650] bg-[#0F1635] px-4 py-3 shadow-sm"
+                      className="flex items-center gap-3 rounded-2xl border border-[#E8E1F4] bg-[#F7F4FF] px-4 py-3 shadow-sm"
                     >
-                      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#39FF14]/10 text-[#39FF14]">✓</span>
+                      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#F3EDFF] text-[#7D4CE6]">✓</span>
                       <span className="font-medium">{feature}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="space-y-4 border-t border-[#1E2650] pt-6 text-center">
-                <p className="text-sm text-[#8B92B3]">Sign in with Google.</p>
+              <div className="space-y-4 border-t border-[#E8E1F4] pt-6 text-center">
+                <p className="text-sm text-[#6E677D]">Sign in with Google.</p>
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
                   className={`flex w-full items-center justify-center gap-3 rounded-full px-6 py-3 text-white transition cursor-pointer ${
                     isLoading
-                      ? 'bg-[#1E2650] cursor-not-allowed'
-                      : 'bg-[#1a73e8] shadow-lg shadow-[#1a73e8]/30 hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(26,115,232,0.4)]'
+                      ? 'bg-[#CFC6E2] cursor-not-allowed'
+                      : 'bg-[#111111] shadow-lg shadow-[#111111]/12 hover:-translate-y-0.5 hover:shadow-[0_18px_30px_rgba(17,17,17,0.16)]'
                   }`}
                   disabled={isLoading}
                 >
@@ -229,7 +228,7 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
             <>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium text-white">
+                  <label htmlFor="email" className="text-sm font-medium text-[#111111]">
                     Email Address
                   </label>
                   <input
@@ -238,7 +237,7 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="w-full rounded-2xl border border-[#1E2650] bg-[#0A0E27] px-4 py-3 text-sm text-white placeholder:text-[#8B92B3] focus:outline-none focus:ring-2 focus:ring-[#0080FF]"
+                    className="w-full rounded-2xl border border-[#E8E1F4] bg-white px-4 py-3 text-sm text-[#111111] placeholder:text-[#8E86A0] focus:outline-none focus:ring-2 focus:ring-[#7D4CE6]"
                     disabled={isLoading}
                   />
                 </div>
@@ -250,8 +249,8 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
                     disabled={sendingCode || !email}
                     className={`w-full rounded-full px-6 py-3 text-sm font-semibold transition ${
                       sendingCode || !email
-                        ? 'bg-[#1E2650] cursor-not-allowed text-[#8B92B3]'
-                        : 'bg-[#39FF14] text-[#0A0E27] shadow-lg shadow-[#39FF14]/30 hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(57,255,20,0.4)] cursor-pointer'
+                        ? 'bg-[#E8E1F4] cursor-not-allowed text-[#8E86A0]'
+                        : 'bg-[#111111] text-white shadow-lg shadow-[#111111]/12 hover:-translate-y-0.5 hover:shadow-[0_18px_30px_rgba(17,17,17,0.16)] cursor-pointer'
                     }`}
                   >
                     {sendingCode ? 'Sending...' : 'Send Verification Code'}
@@ -259,7 +258,7 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
                 ) : (
                   <>
                     <div className="space-y-2">
-                      <label htmlFor="code" className="text-sm font-medium text-white">
+                      <label htmlFor="code" className="text-sm font-medium text-[#111111]">
                         Verification Code
                       </label>
                       <input
@@ -269,7 +268,7 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
                         onChange={(e) => setVerificationCode(e.target.value)}
                         placeholder="Enter 6-digit code"
                         maxLength={6}
-                        className="w-full rounded-2xl border border-[#1E2650] bg-[#0A0E27] px-4 py-3 text-sm text-white placeholder:text-[#8B92B3] focus:outline-none focus:ring-2 focus:ring-[#0080FF]"
+                        className="w-full rounded-2xl border border-[#E8E1F4] bg-white px-4 py-3 text-sm text-[#111111] placeholder:text-[#8E86A0] focus:outline-none focus:ring-2 focus:ring-[#7D4CE6]"
                         disabled={isLoading}
                       />
                     </div>
@@ -280,8 +279,8 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
                       disabled={isLoading || !verificationCode}
                       className={`w-full rounded-full px-6 py-3 text-sm font-semibold transition ${
                         isLoading || !verificationCode
-                          ? 'bg-[#1E2650] cursor-not-allowed text-[#8B92B3]'
-                          : 'bg-[#39FF14] text-[#0A0E27] shadow-lg shadow-[#39FF14]/30 hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(57,255,20,0.4)] cursor-pointer'
+                          ? 'bg-[#E8E1F4] cursor-not-allowed text-[#8E86A0]'
+                          : 'bg-[#111111] text-white shadow-lg shadow-[#111111]/12 hover:-translate-y-0.5 hover:shadow-[0_18px_30px_rgba(17,17,17,0.16)] cursor-pointer'
                       }`}
                     >
                       {isLoading ? 'Signing in...' : 'Sign In'}
@@ -291,7 +290,7 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
                       type="button"
                       onClick={handleSendCode}
                       disabled={countdown > 0 || sendingCode}
-                      className="w-full text-sm text-[#8B92B3] hover:text-white disabled:cursor-not-allowed cursor-pointer"
+                      className="w-full text-sm text-[#6E677D] hover:text-[#111111] disabled:cursor-not-allowed cursor-pointer"
                     >
                       {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend verification code'}
                     </button>

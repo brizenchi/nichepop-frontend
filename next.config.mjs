@@ -29,6 +29,37 @@ const nextConfig = {
     optimizeCss: true,
   },
 
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'www.nichepop.app',
+          },
+        ],
+        destination: 'https://nichepop.app/:path*',
+        permanent: true,
+      },
+      {
+        source: '/compare',
+        destination: '/blog',
+        permanent: true,
+      },
+      {
+        source: '/compare/ahrefs',
+        destination: '/blog/nichepop-vs-ahrefs-comparison',
+        permanent: true,
+      },
+      {
+        source: '/compare/semrush',
+        destination: '/blog',
+        permanent: true,
+      },
+    ]
+  },
+
   // Headers for better caching
   async headers() {
     return [

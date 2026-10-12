@@ -1,19 +1,19 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Pricing - Free & Pro Keyword Research Plans',
-  description: 'Start free with 3 searches/day. Pro plans from $29/mo for unlimited keyword research, real-time data & AI insights. No credit card required for free tier.',
+  title: 'Pricing - Reddit Marketing Plans',
+  description: 'Ideas DB and Idea Analysis are free. Pay only when you want the Reddit marketing panel, lead tracking, and ongoing follow-up workflow.',
   keywords: [
-    'keyword research tool pricing',
-    'affordable keyword tool',
-    'free keyword research tool',
-    'keyword tool subscription',
-    'SEO tool pricing',
-    'keyword research plans',
+    'reddit marketing pricing',
+    'reddit lead generation pricing',
+    'startup opportunity tool pricing',
+    'idea analysis tool pricing',
+    'reddit workflow subscription',
+    'founder marketing tool pricing',
   ],
   openGraph: {
-    title: 'NichePop Pricing - Start Free or Go Pro',
-    description: 'Choose the perfect plan for your keyword research needs. Start free, upgrade anytime.',
+    title: 'NichePop Pricing - Pay Only For Reddit Marketing',
+    description: 'Free Ideas DB and free Idea Analysis. Upgrade when you want the Reddit marketing workflow.',
     type: 'website',
     images: [{
       url: '/og-image-pricing.png',
@@ -24,8 +24,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'NichePop Pricing - Start Free or Go Pro',
-    description: 'Choose the perfect plan for your keyword research needs.',
+    title: 'NichePop Pricing - Pay Only For Reddit Marketing',
+    description: 'Free Ideas DB and free Idea Analysis. Upgrade when you want the Reddit marketing workflow.',
     images: ['/twitter-image-pricing.png'],
   },
   alternates: {

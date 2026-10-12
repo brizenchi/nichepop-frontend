@@ -20,16 +20,16 @@ export function PricingModal({ open, onOpenChange, feature }: PricingModalProps)
           <div className="flex items-center justify-center">
             <Badge className="bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 px-4 py-1.5">
               <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-              Upgrade to Unlock
+              Unlock Reddit Marketing
             </Badge>
           </div>
           <DialogTitle className="text-2xl sm:text-3xl font-bold text-center">
-            Choose Your Plan
+            Upgrade To The Paid Panel
           </DialogTitle>
           <DialogDescription className="text-center text-base">
             {feature
-              ? `Unlock "${feature}" and get access to all premium features.`
-              : "Get unlimited access to all features and insights."}
+              ? `Unlock "${feature}" and keep your Reddit workflow running in one place.`
+              : "Unlock the Reddit marketing panel with threads, reply ideas, leads, and saved follow-up."}
           </DialogDescription>
         </DialogHeader>
 

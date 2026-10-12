@@ -3,83 +3,89 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Fintech/Crypto inspired color palette - Deep navy, electric blue, neon accents */
 :root {
-  --background: oklch(0.08 0.015 250);
-  --foreground: oklch(0.98 0.005 250);
-  --card: oklch(0.12 0.02 250);
-  --card-foreground: oklch(0.98 0.005 250);
-  --popover: oklch(0.12 0.02 250);
-  --popover-foreground: oklch(0.98 0.005 250);
-  --primary: oklch(0.65 0.25 230);
-  --primary-foreground: oklch(0.98 0.005 250);
-  --secondary: oklch(0.18 0.025 250);
-  --secondary-foreground: oklch(0.98 0.005 250);
-  --muted: oklch(0.18 0.025 250);
-  --muted-foreground: oklch(0.55 0.015 250);
-  --accent: oklch(0.75 0.22 180);
-  --accent-foreground: oklch(0.08 0.015 250);
-  --destructive: oklch(0.65 0.28 25);
-  --destructive-foreground: oklch(0.98 0.005 250);
-  --border: oklch(0.22 0.03 250);
-  --input: oklch(0.22 0.03 250);
-  --ring: oklch(0.65 0.25 230);
-  --chart-1: oklch(0.65 0.25 230);
-  --chart-2: oklch(0.75 0.22 180);
-  --chart-3: oklch(0.7 0.25 150);
-  --chart-4: oklch(0.75 0.2 280);
-  --chart-5: oklch(0.65 0.28 25);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.08 0.015 250);
-  --sidebar-foreground: oklch(0.55 0.015 250);
-  --sidebar-primary: oklch(0.65 0.25 230);
-  --sidebar-primary-foreground: oklch(0.98 0.005 250);
-  --sidebar-accent: oklch(0.12 0.02 250);
-  --sidebar-accent-foreground: oklch(0.98 0.005 250);
-  --sidebar-border: oklch(0.22 0.03 250);
-  --sidebar-ring: oklch(0.65 0.25 230);
+  --background: #fafafa;
+  --foreground: #111111;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+  --primary: #111111;
+  --primary-foreground: #ffffff;
+  --secondary: #f3edff;
+  --secondary-foreground: #111111;
+  --muted: #f7f4ff;
+  --muted-foreground: #6e677d;
+  --accent: #eaf6ff;
+  --accent-foreground: #111111;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e8e1f4;
+  --input: #e8e1f4;
+  --ring: #7d4ce6;
+  --chart-1: #8b5cf6;
+  --chart-2: #1479d6;
+  --chart-3: #d49a00;
+  --chart-4: #43b86e;
+  --chart-5: #f7b6d8;
+  --radius: 0.875rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #6e677d;
+  --sidebar-primary: #111111;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f7f4ff;
+  --sidebar-accent-foreground: #111111;
+  --sidebar-border: #e8e1f4;
+  --sidebar-ring: #7d4ce6;
 
-  /* Custom fintech colors */
-  --electric-blue: oklch(0.65 0.25 230);
-  --neon-cyan: oklch(0.75 0.22 180);
-  --neon-green: oklch(0.7 0.25 150);
-  --neon-purple: oklch(0.75 0.2 280);
-  --neon-orange: oklch(0.65 0.28 25);
+  --brand-violet: #7d4ce6;
+  --brand-violet-strong: #8b5cf6;
+  --brand-lilac: #ba87ff;
+  --brand-violet-soft: #f3edff;
+  --brand-blue: #1479d6;
+  --brand-blue-soft: #eaf6ff;
+  --brand-yellow: #d49a00;
+  --brand-yellow-soft: #fff7d8;
+  --brand-green: #43b86e;
+  --brand-peach: #ffece2;
+  --brand-pink: #f7b6d8;
+  --brand-grid: rgba(125, 76, 230, 0.08);
+  --brand-text-soft: #6e677d;
 }
 
 .dark {
-  --background: oklch(0.08 0.015 250);
-  --foreground: oklch(0.98 0.005 250);
-  --card: oklch(0.12 0.02 250);
-  --card-foreground: oklch(0.98 0.005 250);
-  --popover: oklch(0.12 0.02 250);
-  --popover-foreground: oklch(0.98 0.005 250);
-  --primary: oklch(0.65 0.25 230);
-  --primary-foreground: oklch(0.98 0.005 250);
-  --secondary: oklch(0.18 0.025 250);
-  --secondary-foreground: oklch(0.98 0.005 250);
-  --muted: oklch(0.18 0.025 250);
-  --muted-foreground: oklch(0.55 0.015 250);
-  --accent: oklch(0.75 0.22 180);
-  --accent-foreground: oklch(0.08 0.015 250);
-  --destructive: oklch(0.65 0.28 25);
-  --destructive-foreground: oklch(0.98 0.005 250);
-  --border: oklch(0.22 0.03 250);
-  --input: oklch(0.22 0.03 250);
-  --ring: oklch(0.65 0.25 230);
-  --chart-1: oklch(0.65 0.25 230);
-  --chart-2: oklch(0.75 0.22 180);
-  --chart-3: oklch(0.7 0.25 150);
-  --chart-4: oklch(0.75 0.2 280);
-  --chart-5: oklch(0.65 0.28 25);
-  --sidebar: oklch(0.08 0.015 250);
-  --sidebar-foreground: oklch(0.55 0.015 250);
-  --sidebar-primary: oklch(0.65 0.25 230);
-  --sidebar-primary-foreground: oklch(0.98 0.005 250);
-  --sidebar-accent: oklch(0.12 0.02 250);
-  --sidebar-accent-foreground: oklch(0.98 0.005 250);
-  --sidebar-border: oklch(0.22 0.03 250);
-  --sidebar-ring: oklch(0.65 0.25 230);
+  --background: #141118;
+  --foreground: #ffffff;
+  --card: #1b1722;
+  --card-foreground: #ffffff;
+  --popover: #1b1722;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #141118;
+  --secondary: #281f35;
+  --secondary-foreground: #ffffff;
+  --muted: #281f35;
+  --muted-foreground: #bdb3cf;
+  --accent: #2a2532;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #342a44;
+  --input: #342a44;
+  --ring: #ba87ff;
+  --chart-1: #ba87ff;
+  --chart-2: #7fc6ff;
+  --chart-3: #f7d26b;
+  --chart-4: #68ca8c;
+  --chart-5: #f7b6d8;
+  --sidebar: #141118;
+  --sidebar-foreground: #bdb3cf;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #141118;
+  --sidebar-accent: #281f35;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #342a44;
+  --sidebar-ring: #ba87ff;
 }
 
 @theme inline {
@@ -121,11 +127,18 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-electric-blue: var(--electric-blue);
-  --color-neon-cyan: var(--neon-cyan);
-  --color-neon-green: var(--neon-green);
-  --color-neon-purple: var(--neon-purple);
-  --color-neon-orange: var(--neon-orange);
+  --color-brand-violet: var(--brand-violet);
+  --color-brand-violet-strong: var(--brand-violet-strong);
+  --color-brand-lilac: var(--brand-lilac);
+  --color-brand-violet-soft: var(--brand-violet-soft);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-blue-soft: var(--brand-blue-soft);
+  --color-brand-yellow: var(--brand-yellow);
+  --color-brand-yellow-soft: var(--brand-yellow-soft);
+  --color-brand-green: var(--brand-green);
+  --color-brand-peach: var(--brand-peach);
+  --color-brand-pink: var(--brand-pink);
+  --color-brand-text-soft: var(--brand-text-soft);
 }
 
 @layer base {
@@ -134,19 +147,19 @@
   }
   body {
     @apply bg-background text-foreground;
+    background: #fafafa;
   }
 }
 
-/* Glow animation for hot keywords - neon cyan glow */
 @keyframes glow-pulse {
   0%,
   100% {
-    box-shadow: 0 0 5px oklch(0.75 0.22 180 / 0.4), 0 0 10px oklch(0.75 0.22 180 / 0.3), 0 0 20px
-      oklch(0.75 0.22 180 / 0.2);
+    box-shadow: 0 0 5px rgba(125, 76, 230, 0.12), 0 0 10px rgba(125, 76, 230, 0.1), 0 0 20px
+      rgba(125, 76, 230, 0.08);
   }
   50% {
-    box-shadow: 0 0 10px oklch(0.75 0.22 180 / 0.6), 0 0 20px oklch(0.75 0.22 180 / 0.4), 0 0 30px
-      oklch(0.75 0.22 180 / 0.3);
+    box-shadow: 0 0 10px rgba(125, 76, 230, 0.22), 0 0 20px rgba(125, 76, 230, 0.18), 0 0 30px
+      rgba(125, 76, 230, 0.12);
   }
 }
 
@@ -154,12 +167,11 @@
   animation: glow-pulse 2s ease-in-out infinite;
 }
 
-/* Additional fintech-style animations */
 @keyframes neon-flicker {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.8; }
 }
 
 .neon-text {
-  text-shadow: 0 0 10px oklch(0.75 0.22 180 / 0.8), 0 0 20px oklch(0.75 0.22 180 / 0.5);
+  text-shadow: 0 0 10px rgba(125, 76, 230, 0.28), 0 0 20px rgba(125, 76, 230, 0.14);
 }

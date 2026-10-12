@@ -13,5 +13,4 @@ export * from './client';
 export { keywordService } from './services/keyword.service';
 export { stripeService } from './services/stripe.service';
 
-// 如果有其他服务，在这里添加
-// export { userService } from './services/user.service';
+export { dashboardService } from './services/dashboard.service';
