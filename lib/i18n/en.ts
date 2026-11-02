@@ -784,6 +784,17 @@ export const en = {
     close: 'Close menu',
     backToSite: 'Back to site',
   },
+  userMenu: {
+    accountMenu: 'Account menu',
+    credits: 'Credits',
+    invite: 'Invite Friends',
+    copying: 'Copying…',
+    copied: 'Link Copied!',
+    copyFailed: 'Could not copy the link. Please allow clipboard access and try again.',
+    settings: 'Settings',
+    loggingOut: 'Logging out…',
+    logOut: 'Log out',
+  },
   switcher: {
     label: 'Language',
   },

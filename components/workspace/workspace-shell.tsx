@@ -4,10 +4,12 @@
 import { Suspense, useEffect, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
-import { ArrowUpRight, Bot, Eye, Lightbulb, Map, Menu, MessageSquare, Package, Plus, Search, Settings, Sparkles, TrendingUp, X, type LucideIcon } from "lucide-react"
+import { ArrowUpRight, Bot, Eye, Lightbulb, LogIn, Map, Menu, MessageSquare, Package, Plus, Search, Sparkles, TrendingUp, X, type LucideIcon } from "lucide-react"
 import { BrandMark } from "@/components/brand-logo"
-import { LanguageSwitcher } from "@/components/i18n/language-switcher"
 import { useLocale, useT } from "@/components/i18n/locale-provider"
+import LoginDialog from "@/components/LoginDialog"
+import { UserMenu } from "@/components/user-menu"
+import { useAuth } from "@/hooks/useAuth"
 import { usePlan } from "@/components/monitors/use-plan"
 import { PricingModal } from "@/components/pricing-modal"
 import { buttonStyles } from "@/components/radar/ui"
@@ -68,11 +70,12 @@ function RecentChats({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-function SidebarContent({ onNavigate, onUpgrade }: { onNavigate?: () => void; onUpgrade: () => void }) {
+function SidebarContent({ onNavigate, onUpgrade, onSignIn }: { onNavigate?: () => void; onUpgrade: () => void; onSignIn: () => void }) {
   const t = useT()
   const locale = useLocale()
   const pathname = usePathname()
   const navItems = useNavItems()
+  const { user, isAuthenticated, loading: authLoading } = useAuth()
   const { plan, limits } = usePlan()
   const { spent } = useChatStore()
   const balance = limits.points - DEMO_POINTS_USED[plan] - spent
@@ -141,16 +144,30 @@ function SidebarContent({ onNavigate, onUpgrade }: { onNavigate?: () => void; on
             </button>
           )}
         </div>
-        <div className="flex items-center justify-between gap-2">
-          <LanguageSwitcher />
-          <div className="flex items-center gap-1">
-            <Link href="/trends/setup" onClick={onNavigate} className="rounded-full p-1.5 text-muted-foreground hover:bg-paper-3 hover:text-foreground" aria-label={t.workspace.settings} title={t.workspace.settings}>
-              <Settings className="h-4 w-4" />
-            </Link>
-            <Link href={localizedHref("/", locale)} className="rounded-full p-1.5 text-muted-foreground hover:bg-paper-3 hover:text-foreground" aria-label={t.workspace.backToSite} title={t.workspace.backToSite}>
-              <ArrowUpRight className="h-4 w-4" />
-            </Link>
+        <div className="flex items-center gap-1">
+          <div className="min-w-0 flex-1">
+            {isAuthenticated && user ? (
+              <UserMenu variant="sidebar" />
+            ) : authLoading ? (
+              <div className="flex h-11 items-center px-2" aria-busy>
+                <span className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground" />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={onSignIn}
+                className="flex h-11 w-full cursor-pointer items-center gap-2.5 rounded-xl px-2 text-sm font-medium text-foreground transition-colors hover:bg-paper-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <LogIn className="h-4 w-4" />
+                </span>
+                {t.common.signIn}
+              </button>
+            )}
           </div>
+          <Link href={localizedHref("/", locale)} className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-paper-3 hover:text-foreground" aria-label={t.workspace.backToSite} title={t.workspace.backToSite}>
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     </div>
@@ -165,8 +182,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   const t = useT()
   const pathname = usePathname()
   const navItems = useNavItems()
+  const { user, isAuthenticated } = useAuth()
   const [drawer, setDrawer] = useState(false)
   const [showPricing, setShowPricing] = useState(false)
+  const [showLogin, setShowLogin] = useState(false)
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
   useEffect(() => setDrawer(false), [pathname])
@@ -174,7 +193,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   return (
     <div className="radar-theme min-h-dvh bg-radar-bg text-radar-text lg:flex">
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 border-r border-rule bg-paper-2 lg:block">
-        <SidebarContent onUpgrade={() => setShowPricing(true)} />
+        <SidebarContent onUpgrade={() => setShowPricing(true)} onSignIn={() => setShowLogin(true)} />
       </aside>
 
       <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-rule bg-paper/90 px-4 backdrop-blur lg:hidden">
@@ -186,10 +205,16 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           <span className="text-[15px] font-semibold tracking-tight text-foreground">NichePop</span>
         </Link>
         <div className="ml-auto flex items-center gap-2">
-          <LanguageSwitcher compact />
           <button onClick={() => setShowPricing(true)} className={cn(buttonStyles.secondary, "h-8 px-2.5")} aria-label={t.common.upgrade}>
             <Sparkles className="h-3.5 w-3.5 text-sky-ink" />
           </button>
+          {isAuthenticated && user ? (
+            <UserMenu className="h-9 w-9" />
+          ) : (
+            <button onClick={() => setShowLogin(true)} className={cn(buttonStyles.secondary, "h-8 px-2.5")} aria-label={t.common.signIn}>
+              <LogIn className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </header>
 
@@ -200,7 +225,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             <button onClick={() => setDrawer(false)} className="absolute right-3 top-3.5 rounded-md p-1 text-muted-foreground hover:text-foreground cursor-pointer" aria-label={t.workspace.close}>
               <X className="h-5 w-5" />
             </button>
-            <SidebarContent onNavigate={() => setDrawer(false)} onUpgrade={() => setShowPricing(true)} />
+            <SidebarContent onNavigate={() => setDrawer(false)} onUpgrade={() => setShowPricing(true)} onSignIn={() => { setDrawer(false); setShowLogin(true) }} />
           </aside>
         </div>
       )}
@@ -227,6 +252,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       </nav>
 
       <PricingModal open={showPricing} onOpenChange={setShowPricing} feature={t.radar.upgradeFeature} />
+      <LoginDialog open={showLogin} onClose={() => setShowLogin(false)} />
     </div>
   )
 }

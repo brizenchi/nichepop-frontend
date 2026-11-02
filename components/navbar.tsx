@@ -98,7 +98,7 @@ export function Navbar() {
         )}
 
         <div className="px-3 pt-2 sm:px-4">
-          <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 rounded-full bg-raised/95 pl-4 pr-2 shadow-card ring-1 ring-rule backdrop-blur sm:pl-5">
+          <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 rounded-full bg-raised/95 pl-4 pr-4 shadow-card ring-1 ring-rule backdrop-blur sm:pl-5 lg:pr-5">
             <div className="flex min-w-0 items-center gap-8">
               <Link href={home} className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <BrandLogo size="sm" />
@@ -120,8 +120,8 @@ export function Navbar() {
               </div>
             </div>
 
-            <div className="hidden items-center gap-1.5 lg:flex">
-              <LanguageSwitcher className="mr-1" />
+            <div className="hidden shrink-0 items-center gap-3 lg:flex">
+              <LanguageSwitcher />
               {isAuthenticated && user ? (
                 <>
                   <Link href="/ask" className="btn btn--sm">
