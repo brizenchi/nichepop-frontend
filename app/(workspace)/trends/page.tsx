@@ -10,7 +10,7 @@ import { LockedWordRow, WordRow } from "@/components/radar/word-row"
 import { TrendsMonthView } from "@/components/trends/month-view"
 import { buttonStyles, cardStyles } from "@/components/radar/ui"
 import { useLocale, useT } from "@/components/i18n/locale-provider"
-import { useAuth } from "@/hooks/useAuth"
+import { useAccount } from "@/hooks/use-account"
 import { useRadarWatchlist } from "@/hooks/use-radar-watchlist"
 import { PUBLIC_DELAY_HOURS, demoWatchlist, getDemoWords, isFreshWord } from "@/lib/data/radar"
 import { cn } from "@/lib/utils"
@@ -22,7 +22,7 @@ type View = "live" | "month"
 export default function TrendsPage() {
   const locale = useLocale()
   const t = useT()
-  const { user } = useAuth()
+  const { plan: accountPlan } = useAccount()
   const { watchlist: savedWatchlist, loaded } = useRadarWatchlist()
   const [previewPlan, setPreviewPlan] = useState<PreviewPlan | null>(null)
   const [filters, setFilters] = useState<RadarFilters>(DEFAULT_FILTERS)
@@ -30,7 +30,7 @@ export default function TrendsPage() {
   const [showPricing, setShowPricing] = useState(false)
   const [view, setView] = useState<View>("live")
 
-  const isPaidMember = user?.membership_level === "pro" || user?.membership_level === "premium"
+  const isPaidMember = accountPlan !== "free"
   const plan: PreviewPlan = previewPlan ?? (isPaidMember ? "pro" : "free")
   const watchlist = savedWatchlist ?? demoWatchlist
 

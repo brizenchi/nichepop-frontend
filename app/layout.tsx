@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import { AuthProvider } from "@/hooks/useAuth"
+import { AccountProvider } from "@/hooks/use-account"
 import { getSiteUrl } from "@/lib/seo/site-url"
 import "./globals.css"
 
@@ -112,11 +112,11 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
       </head>
       <body className="font-sans antialiased">
-        <AuthProvider>
+        <AccountProvider>
           {children}
           <Analytics />
           <SpeedInsights />
-        </AuthProvider>
+        </AccountProvider>
       </body>
     </html>
   )

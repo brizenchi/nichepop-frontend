@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowUp, Bot, Check, Copy, Eye, Lightbulb, Loader2, Map, Package, Search, Share2, Sparkles, Zap, type LucideIcon } from "lucide-react"
 import { MonitorAddCard } from "@/components/chat/monitor-add-card"
 import { useLocale, useT } from "@/components/i18n/locale-provider"
-import { usePlan } from "@/components/monitors/use-plan"
+import { usePlan, usePoints } from "@/components/monitors/use-plan"
 import { PricingModal } from "@/components/pricing-modal"
 import { isHighIntent } from "@/components/radar/mention-card"
 import { ReportView } from "@/components/radar/report-view"
@@ -16,7 +16,7 @@ import { useMonitors } from "@/hooks/use-monitors"
 import { useChatStore } from "@/components/workspace/chat-store"
 import { newMessageId, type ChatMessage } from "@/lib/data/chat"
 import { getMonitorFeed, monitorDraftFromReport } from "@/lib/data/monitors"
-import { DEMO_POINTS_USED, TASK_POINT_CAP } from "@/lib/data/plans"
+import { TASK_POINT_CAP } from "@/lib/data/plans"
 import { PUBLIC_DELAY_HOURS, getDemoWords } from "@/lib/data/radar"
 import { REPORT_KINDS, REPORT_PLANS, classifyMessage, getFollowUps, reportFor, reportPoints, subjectOf } from "@/lib/data/reports"
 import { cn } from "@/lib/utils"
@@ -40,7 +40,7 @@ function ChatWorkspace() {
   const locale = useLocale()
   const t = useT()
   const ta = t.ask
-  const { plan, limits } = usePlan()
+  const { limits } = usePlan()
   const { gate, dialog } = useAuthGate()
   const { conversations, updateConversation, spent, spend } = useChatStore()
 
@@ -54,7 +54,8 @@ function ChatWorkspace() {
   // The open chat lives in the URL (?c=), so the sidebar and links can point at it.
   const activeId = searchParams.get("c")
   const active = conversations.find((c) => c.id === activeId) ?? null
-  const balance = limits.points - DEMO_POINTS_USED[plan] - spent
+  // Answers here are still demos (frontend#10); a signed-in reader sees their real balance.
+  const balance = usePoints(spent).balance ?? limits.points
   const running = active?.messages.some((m) => m.role === "report" && m.status === "running") ?? false
 
   useEffect(() => () => timers.current.forEach(clearTimeout), [])

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import LoginDialog from "@/components/LoginDialog"
-import { useAuth } from "@/hooks/useAuth"
+import { useAccount } from "@/hooks/use-account"
 import { DEMO_MODE } from "@/lib/demo"
 
 export type GateReason = "save" | "ask" | "monitor"
@@ -13,7 +13,7 @@ export type GateReason = "save" | "ask" | "monitor"
  * Google sign-in leaves the page, so callers keep drafts in localStorage.
  */
 export function useAuthGate() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAccount()
   const [reason, setReason] = useState<GateReason | null>(null)
   const pending = useRef<(() => void) | null>(null)
 

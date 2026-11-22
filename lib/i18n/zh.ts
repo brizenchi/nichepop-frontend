@@ -1,4 +1,7 @@
 import type { Dictionary } from './en'
+import { accountZh } from './account'
+import { billingZh } from './billing'
+import { referralsZh } from './referrals'
 
 const growthWindow: Record<string, string> = { '24h': '24 小时', '48h': '48 小时', '72h': '72 小时', '7d': '7 天', '30d': '30 天' }
 
@@ -519,8 +522,10 @@ export const zh: Dictionary = {
         cta: '升级到 Premium',
       },
     },
-    paymentError: '支付出错',
-    paymentErrorText: '无法发起支付，请稍后重试。',
+    currentPlan: '你已经在使用这个套餐。',
+    reviewBilling: '更改前，请先在订阅与账单里查看当前订阅。',
+    unavailable: '这个套餐暂时不能购买，请稍后再试。',
+    openBilling: '打开订阅与账单',
     tableCaption: '三个方案对比',
     tableRows: (h: number) => [
       { label: '趋势', free: `滞后 ${h} 小时，每天 3 个`, pro: '实时 + 近 30 天视图', premium: '实时 + 近 30 天视图' },
@@ -690,13 +695,7 @@ export const zh: Dictionary = {
       ask: '登录后运行这次分析。免费账号每月有 20 点。',
       monitor: '登录后开始这个监控。',
     },
-    why: '为什么要登录',
     benefits: ['保存你的词根和监控', '高意图帖子推送给你', '保留回答和点数记录'],
-    google: 'Google',
-    email: '邮箱',
-    withGoogle: '用 Google 账号登录。',
-    continueGoogle: '使用 Google 继续',
-    loading: '加载中…',
     emailLabel: '邮箱地址',
     emailPlaceholder: 'your@email.com',
     sendCode: '发送验证码',
@@ -711,9 +710,7 @@ export const zh: Dictionary = {
     invalidEmail: '请输入有效的邮箱地址',
     enterCode: '请输入验证码',
     loginFailed: '登录失败，请检查验证码后重试。',
-    timeout: '请求超时，请检查网络。',
     network: '网络错误，请稍后再试。',
-    missingLink: '没有拿到授权链接，请重试。',
   },
   start: {
     metaTitle: '开始使用',
@@ -755,6 +752,13 @@ export const zh: Dictionary = {
     followUp: '追问',
     byMonitor: '各监控的 X 帖子',
     posts: (n: number) => `${n.toLocaleString('en-US')} 条`,
+    left: '剩余点数',
+    leftHint: (monthly: number) => `每月 1 日发放 ${monthly.toLocaleString('en-US')} 点`,
+    usedThisMonth: '本月已用点数',
+    monitors: '运行中的监控',
+    apiKeys: 'API key',
+    recent: '最近记录',
+    allHistory: '全部点数明细',
   },
   workspace: {
     name: '工作台',
@@ -768,15 +772,18 @@ export const zh: Dictionary = {
   },
   userMenu: {
     accountMenu: '用户菜单',
-    credits: '积分',
-    invite: '邀请好友',
+    points: 'AI 点数',
+    invite: '复制邀请链接',
+    inviteReward: '双方各得 200 点',
     copying: '正在复制…',
     copied: '链接已复制！',
     copyFailed: '链接复制失败，请允许剪贴板访问后重试。',
-    settings: '设置',
     loggingOut: '正在退出…',
     logOut: '退出登录',
   },
+  account: accountZh,
+  billing: billingZh,
+  referrals: referralsZh,
   switcher: {
     label: '语言',
   },

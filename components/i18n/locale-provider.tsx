@@ -26,3 +26,9 @@ export function LocaleProvider({ locale, remember = false, children }: { locale:
 export const useLocale = () => useContext(LocaleContext)
 
 export const useT = (): Dictionary => getDictionary(useContext(LocaleContext))
+
+/** Picks the reader's language from an { en, zh } pair (the template's lib/ files return these). */
+export function usePick() {
+  const locale = useContext(LocaleContext)
+  return (text: { en: string; zh: string }) => text[locale]
+}

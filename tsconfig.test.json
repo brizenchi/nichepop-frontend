@@ -1,0 +1,52 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "jsx": "react-jsx",
+    "rootDir": ".",
+    "outDir": "./.test-dist",
+    "noEmit": false,
+    "incremental": false,
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "content/site.ts",
+    "lib/api.ts",
+    "lib/auth.ts",
+    "lib/env.ts",
+    "lib/locale.ts",
+    "lib/oauth-flow.ts",
+    "lib/oauth-exchange.ts",
+    "lib/auth-methods.ts",
+    "lib/sign-in-methods-cache.ts",
+    "lib/pricing-checkout.ts",
+    "lib/billing-intent.ts",
+    "lib/billing-presentation.ts",
+    "lib/billing-selection.ts",
+    "lib/billing-state.ts",
+    "lib/billing-money.ts",
+    "lib/credit-checkout.ts",
+    "lib/customer-records.ts",
+    "lib/account-summary.ts",
+    "lib/account-actions.ts",
+    "lib/subscription-management.ts",
+    "lib/subscription-change.ts",
+    "lib/payment-history.ts",
+    "lib/request-state.ts",
+    "lib/resource-data.ts",
+    "lib/operations-api.ts",
+    "lib/page-return.ts",
+    "lib/request-generation.ts",
+    "lib/format.ts",
+    "lib/pricing-subscription-cache.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
+}

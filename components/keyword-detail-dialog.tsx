@@ -38,7 +38,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { keywordService } from "@/lib/api"
+import { keywordService } from "@/lib/api/services/keyword.service"
 import type { KeywordDetailData } from "@/lib/types"
 import {
   calculateProfitOpportunity,

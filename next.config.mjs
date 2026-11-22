@@ -1,3 +1,15 @@
+import { PHASE_PRODUCTION_BUILD } from 'next/constants.js'
+
+// A production build must know the API and its own address: sign-in, payments
+// and Stripe's return links use them (lib/env.ts). Demo builds run without the API.
+function checkProductionEnv() {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return
+  const missing = ['NEXT_PUBLIC_API_BASE_URL', 'NEXT_PUBLIC_APP_URL'].filter((name) => !process.env[name]?.trim())
+  if (missing.length > 0) {
+    throw new Error(`Set ${missing.join(' and ')} for a production build (e.g. https://api.nichepop.app/api/v1 and https://nichepop.app), or NEXT_PUBLIC_DEMO_MODE=true for a demo without the API.`)
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable React Strict Mode for better development practices
@@ -54,4 +66,7 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+export default function config(phase) {
+  if (phase === PHASE_PRODUCTION_BUILD) checkProductionEnv()
+  return nextConfig
+}

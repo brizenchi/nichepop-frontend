@@ -1,98 +1,44 @@
 /**
- * API 客户端基础类
- * 提供统一的请求方法和错误处理
+ * NichePop 页面调用接口用的客户端：走模板的 apiRequest（lib/api.ts），
+ * 带上当前登录的 token，地址来自 NEXT_PUBLIC_API_BASE_URL；401 时清掉登录状态。
  */
 
-import { apiFetch, ApiError } from '@/lib/auth-utils';
-import { buildApiUrl } from './config';
+import { apiRequest } from '@/lib/api';
+import { readSession } from '@/lib/auth';
 
-/**
- * 基础 API 客户端类
- */
+function withQuery(endpoint: string, params?: object): string {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params ?? {})) {
+    if (value !== undefined && value !== null) query.set(key, String(value));
+  }
+  const search = query.toString();
+  return search ? `${endpoint}?${search}` : endpoint;
+}
+
 export class ApiClient {
-  /**
-   * GET 请求
-   */
-  async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
-    const url = this.buildUrl(endpoint, params);
-    return apiFetch<T>(url, {
-      method: 'GET',
-    });
+  private request<T>(endpoint: string, method: string, data?: unknown): Promise<T> {
+    return apiRequest<T>(endpoint, { method, authToken: readSession()?.token, json: data });
   }
 
-  /**
-   * POST 请求
-   */
-  async post<T>(endpoint: string, data?: any): Promise<T> {
-    const url = buildApiUrl(endpoint);
-    return apiFetch<T>(url, {
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-    });
+  get<T>(endpoint: string, params?: object): Promise<T> {
+    return this.request<T>(withQuery(endpoint, params), 'GET');
   }
 
-  /**
-   * PUT 请求
-   */
-  async put<T>(endpoint: string, data?: any): Promise<T> {
-    const url = buildApiUrl(endpoint);
-    return apiFetch<T>(url, {
-      method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
-    });
+  post<T>(endpoint: string, data?: unknown): Promise<T> {
+    return this.request<T>(endpoint, 'POST', data);
   }
 
-  /**
-   * PATCH 请求
-   */
-  async patch<T>(endpoint: string, data?: any): Promise<T> {
-    const url = buildApiUrl(endpoint);
-    return apiFetch<T>(url, {
-      method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
-    });
+  put<T>(endpoint: string, data?: unknown): Promise<T> {
+    return this.request<T>(endpoint, 'PUT', data);
   }
 
-  /**
-   * DELETE 请求
-   */
-  async delete<T>(endpoint: string): Promise<T> {
-    const url = buildApiUrl(endpoint);
-    return apiFetch<T>(url, {
-      method: 'DELETE',
-    });
+  patch<T>(endpoint: string, data?: unknown): Promise<T> {
+    return this.request<T>(endpoint, 'PATCH', data);
   }
 
-  /**
-   * 构建带查询参数的 URL
-   */
-  private buildUrl(endpoint: string, params?: Record<string, any>): string {
-    const url = buildApiUrl(endpoint);
-
-    if (!params || Object.keys(params).length === 0) {
-      return url;
-    }
-
-    // 过滤掉 undefined 和 null 的参数
-    const filteredParams = Object.entries(params).reduce((acc, [key, value]) => {
-      if (value !== undefined && value !== null) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as Record<string, any>);
-
-    const queryString = new URLSearchParams(
-      Object.entries(filteredParams).map(([key, value]) => [
-        key,
-        String(value),
-      ])
-    ).toString();
-
-    return queryString ? `${url}?${queryString}` : url;
+  delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, 'DELETE');
   }
 }
 
-/**
- * 导出单例实例
- */
 export const apiClient = new ApiClient();
