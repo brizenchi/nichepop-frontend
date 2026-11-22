@@ -41,6 +41,15 @@ const nextConfig = {
     optimizeCss: true,
   },
 
+  async redirects() {
+    // The old Google sign-in landing; the API now sends readers to /login (auth.frontend_redirect). The query is kept.
+    const redirects = [{ source: '/auth/callback', destination: '/login', permanent: false }]
+    // The admin dashboard is the go-modules template deployed on its own (docs/template.md).
+    const admin = process.env.NEXT_PUBLIC_ADMIN_URL?.trim().replace(/\/+$/, '')
+    if (admin) redirects.push({ source: '/admin/:path*', destination: `${admin}/admin/:path*`, permanent: false })
+    return redirects
+  },
+
   // Headers for better caching
   async headers() {
     return [

@@ -797,6 +797,7 @@ export const en = {
     copying: 'Copying…',
     copied: 'Link copied!',
     copyFailed: 'Could not copy the link. Please allow clipboard access and try again.',
+    admin: 'Admin dashboard',
     loggingOut: 'Logging out…',
     logOut: 'Log out',
   },

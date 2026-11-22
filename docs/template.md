@@ -47,7 +47,7 @@
 | 页面 | 内容 | 接口 |
 |---|---|---|
 | `/login` | 登录；也是 Google 登录完成后的落点（`?code=&flow=`、`?oauth_error=`），登录后默认去 `/ask` | `/capabilities`、`/auth/*` |
-| `/auth/callback` | 旧地址，原样转到 `/login` | — |
+| `/auth/callback` | 旧地址，带着参数转到 `/login`（`next.config.mjs`） | — |
 | `/account` | 登录邮箱、套餐、退出登录 | `/account/membership` |
 | `/billing` | 当前套餐、剩余点数、取消/恢复续费、改套餐、付款记录和发票 | `/stripe/*`、`/billing/purchases`、`/account/membership`、`/credits` |
 | `/credits` | 剩余点数、即将到期、每一笔收支 | `/credits`、`/credits/transactions` |
@@ -71,6 +71,7 @@ Ask AI 的回答还是演示（frontend#10 接真实 Agent）。
 | `NEXT_PUBLIC_APP_URL` | 网站地址，例如 `https://nichepop.app`；Stripe 付款后跳回这里 |
 | `NEXT_PUBLIC_DEMO_MODE` | `true` 时工作台用演示数据、跳过登录拦截，可以不配后端 |
 | `NEXT_PUBLIC_AUTH_EMAIL_ENABLED`、`NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS` | 可选，在后端开启的登录方式里再关掉一些 |
+| `NEXT_PUBLIC_ADMIN_URL` | 可选，管理后台的地址（见下） |
 
 `next build` 时如果没配前两个（且不是演示模式）会直接报错，不会悄悄连到别的地址。
 
@@ -86,4 +87,12 @@ Ask AI 的回答还是演示（frontend#10 接真实 Agent）。
 2. 重新加上"和模板不一样的地方"那张表里的改动。
 3. `npm test`、`npm run lint`、`npm run build` 都通过后再提交。
 
-管理员后台（`/admin`）还没有搬过来，见 frontend#6。
+## 管理后台
+
+管理后台不放进这个网站，而是把 go-modules 的 `templates/quickstart-nextjs` **原样单独部署**
+（2026-11-22 确认），例如 `https://admin.nichepop.app`，连同一个 API。升级时换成新版本的模板即可，
+这里不用改代码。部署和后端配置见后端仓库的 `docs/deploy.md`「网页」一节。
+
+- 本站设置 `NEXT_PUBLIC_ADMIN_URL`（例如 `https://admin.nichepop.app`）后，`/admin` 会跳到那里，
+  管理员的头像菜单里多一个"管理后台"。
+- 管理员在后台用邮箱 + 密码登录（后端的 `APP_AUTH_ADMIN_EMAIL`、`APP_AUTH_ADMIN_PASSWORD`）。

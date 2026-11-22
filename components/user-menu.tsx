@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
-import { User, LogOut, Gift, CreditCard, Crown, TrendingUp, Check, ChevronsUpDown, Coins, Receipt, UserRound, Users } from "lucide-react"
+import { User, LogOut, Gift, CreditCard, Crown, TrendingUp, Check, ChevronsUpDown, Coins, Receipt, UserRound, Users, Shield } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,9 @@ import { useAccount } from "@/hooks/use-account"
 import { useT } from "@/components/i18n/locale-provider"
 import { getReferralCode } from "@/lib/api"
 import { cn } from "@/lib/utils"
+
+/** The admin dashboard (the go-modules template, deployed on its own; docs/template.md). */
+const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL?.trim().replace(/\/+$/, "") || ""
 
 interface UserMenuProps {
   /** `icon`: avatar-only trigger (site header). `sidebar`: full-width row with name and email (workspace sidebar). */
@@ -186,6 +189,15 @@ export function UserMenu({ variant = "icon", side, className }: UserMenuProps) {
             </Link>
           </DropdownMenuItem>
         ))}
+
+        {user.role === "admin" && ADMIN_URL && (
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <a href={`${ADMIN_URL}/admin`}>
+              <Shield className="mr-2 h-4 w-4" />
+              <span>{t.admin}</span>
+            </a>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuSeparator />
 

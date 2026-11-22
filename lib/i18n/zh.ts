@@ -778,6 +778,7 @@ export const zh: Dictionary = {
     copying: '正在复制…',
     copied: '链接已复制！',
     copyFailed: '链接复制失败，请允许剪贴板访问后重试。',
+    admin: '管理后台',
     loggingOut: '正在退出…',
     logOut: '退出登录',
   },
