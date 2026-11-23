@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowUp, Bot, Check, Copy, Eye, Lightbulb, Loader2, Map, Package, Search, Share2, Sparkles, Zap, type LucideIcon } from "lucide-react"
@@ -12,15 +12,18 @@ import { isHighIntent } from "@/components/radar/mention-card"
 import { ReportView } from "@/components/radar/report-view"
 import { buttonStyles, cardStyles } from "@/components/radar/ui"
 import { useAuthGate } from "@/hooks/use-auth-gate"
-import { useMonitors } from "@/hooks/use-monitors"
+import { useMonitorFeed, useMonitors } from "@/hooks/use-monitors"
+import { useResource } from "@/hooks/use-resource"
 import { useChatStore } from "@/components/workspace/chat-store"
+import { listNiches } from "@/lib/api/niches"
 import { newMessageId, type ChatMessage } from "@/lib/data/chat"
-import { getMonitorFeed, monitorDraftFromReport } from "@/lib/data/monitors"
+import { monitorDraftFromReport } from "@/lib/data/monitors"
 import { TASK_POINT_CAP } from "@/lib/data/plans"
-import { PUBLIC_DELAY_HOURS, getDemoWords } from "@/lib/data/radar"
+import { PUBLIC_DELAY_HOURS } from "@/lib/data/radar"
 import { REPORT_KINDS, REPORT_PLANS, classifyMessage, getFollowUps, reportFor, reportPoints, subjectOf } from "@/lib/data/reports"
+import { DEMO_MODE } from "@/lib/demo"
 import { cn } from "@/lib/utils"
-import type { RadarReport, ReportKind } from "@/lib/types"
+import type { Monitor, RadarReport, ReportKind } from "@/lib/types"
 
 const KIND_ICONS: Record<ReportKind, LucideIcon> = { keyword: Search, idea: Lightbulb, product: Package, market: Map }
 const QUESTION = /怎么|如何|为什么|哪|吗|呢|\bhow\b|\bwhy\b|\bwhat\b|\bwhich\b|\bwhere\b|\bshould\b|\?|？/i
@@ -84,7 +87,8 @@ function ChatWorkspace() {
   const send = useCallback(
     (text: string, conversationId: string | null) => {
       const value = text.trim()
-      if (!value) return
+      // Answers here are demo answers; real builds wait for the analyst (frontend#10).
+      if (!value || !DEMO_MODE) return
       const id = conversationId ?? `c-${Date.now()}`
       const history = conversations.find((c) => c.id === conversationId)?.messages ?? []
       const answer = reply(value, history)
@@ -102,7 +106,8 @@ function ChatWorkspace() {
     const q = searchParams.get("q")
     if (q && handledQuery.current !== q) {
       handledQuery.current = q
-      send(q, null)
+      if (DEMO_MODE) send(q, null)
+      else setDraft(q)
     }
   }, [searchParams, send])
 
@@ -134,7 +139,7 @@ function ChatWorkspace() {
     <main className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-3xl flex-col px-4 pt-6 sm:px-6 lg:min-h-dvh lg:pt-10">
       <div className="flex-1">
         {!active ? (
-          <Welcome onSend={(text) => send(text, null)} />
+          <Welcome onSend={(text) => (DEMO_MODE ? send(text, null) : setDraft(text))} />
         ) : (
           <div className="space-y-5 pb-6">
             {active.messages.map((message, index) => (
@@ -172,11 +177,11 @@ function ChatWorkspace() {
             disabled={running}
             className="h-10 min-w-0 flex-1 bg-transparent px-3 text-[15px] text-foreground outline-none placeholder:text-faint"
           />
-          <button type="submit" disabled={!draft.trim() || running} className={cn(buttonStyles.primary, "h-10 w-10 shrink-0 px-0")} aria-label={ta.send}>
+          <button type="submit" disabled={!draft.trim() || running || !DEMO_MODE} className={cn(buttonStyles.primary, "h-10 w-10 shrink-0 px-0")} aria-label={ta.send}>
             <ArrowUp className="h-4 w-4" />
           </button>
         </div>
-        <p className="mt-1.5 px-1 text-[11px] text-muted-foreground">{ta.costHint(balance)}</p>
+        <p className="mt-1.5 px-1 text-[11px] text-muted-foreground">{DEMO_MODE ? ta.costHint(balance) : t.states.askSoon}</p>
       </form>
 
       <PricingModal open={showPricing} onOpenChange={setShowPricing} feature={ta.balanceLabel} />
@@ -190,15 +195,10 @@ function Welcome({ onSend }: { onSend: (text: string) => void }) {
   const locale = useLocale()
   const t = useT().ask
   const { monitors } = useMonitors()
-  const freshest = useMemo(
-    () => getDemoWords(locale).filter((w) => w.verdict === "build" && w.firstSeenHoursAgo < PUBLIC_DELAY_HOURS).sort((a, b) => a.firstSeenHoursAgo - b.firstSeenHoursAgo)[0],
-    [locale],
-  )
-  const alerts = monitors.flatMap((monitor) => {
-    const feed = getMonitorFeed(monitor.id, locale)
-    const count = feed?.mentions.filter(isHighIntent).length ?? 0
-    return count > 0 ? [{ monitor, count }] : []
-  })
+  const loadWords = useCallback(() => listNiches({ locale }), [locale])
+  // Before the trend library is live (backend #16) there is simply no highlight.
+  const words = useResource(loadWords).data?.items ?? []
+  const freshest = words.filter((w) => w.verdict === "build" && w.firstSeenHoursAgo < PUBLIC_DELAY_HOURS).sort((a, b) => a.firstSeenHoursAgo - b.firstSeenHoursAgo)[0]
 
   return (
     <div className="py-6 sm:py-10">
@@ -219,11 +219,8 @@ function Welcome({ onSend }: { onSend: (text: string) => void }) {
             <span className="text-sm text-foreground">{t.todayTrend(freshest.keyword, freshest.firstSeenHoursAgo)}</span>
           </button>
         )}
-        {alerts.slice(0, 3).map(({ monitor, count }) => (
-          <Link key={monitor.id} href={`/monitors/${monitor.id}`} className={cn(cardStyles, "flex items-start gap-3 p-4 transition-colors hover:border-primary/40")}>
-            <Eye className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <span className="text-sm text-foreground">{t.todayPosts(count, monitor.name)}</span>
-          </Link>
+        {monitors.slice(0, 3).map((monitor) => (
+          <MonitorAlert key={monitor.id} monitor={monitor} />
         ))}
       </div>
 
@@ -244,6 +241,20 @@ function Welcome({ onSend }: { onSend: (text: string) => void }) {
         })}
       </div>
     </div>
+  )
+}
+
+/** High-intent posts a monitor found, when it found any. */
+function MonitorAlert({ monitor }: { monitor: Monitor }) {
+  const t = useT().ask
+  const { data: feed } = useMonitorFeed(monitor.id)
+  const count = feed?.mentions.filter(isHighIntent).length ?? 0
+  if (count === 0) return null
+  return (
+    <Link href={`/monitors/${monitor.id}`} className={cn(cardStyles, "flex items-start gap-3 p-4 transition-colors hover:border-primary/40")}>
+      <Eye className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+      <span className="text-sm text-foreground">{t.todayPosts(count, monitor.name)}</span>
+    </Link>
   )
 }
 

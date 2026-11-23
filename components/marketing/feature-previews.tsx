@@ -12,6 +12,12 @@ import { cn } from "@/lib/utils"
 
 const frame = "overflow-hidden rounded-2xl bg-raised shadow-lift ring-1 ring-rule"
 
+/** The previews show demo data, so they say so (frontend#7). */
+function ExampleTag() {
+  const t = useT()
+  return <span className="rounded-md bg-primary-soft px-1.5 py-0.5 text-[11px] font-medium text-primary">{t.monitors.example}</span>
+}
+
 /** Static previews of the three workspace places, built from the real components and demo data. */
 export function TrendPreview() {
   const locale = useLocale()
@@ -23,7 +29,10 @@ export function TrendPreview() {
   return (
     <div className={frame}>
       <div className="flex items-center justify-between gap-3 border-b border-border bg-subtle px-4 py-3 text-xs">
-        <span className="font-semibold text-foreground">{t.radar.title}</span>
+        <span className="flex items-center gap-2 font-semibold text-foreground">
+          {t.radar.title}
+          <ExampleTag />
+        </span>
         <span className="flex items-center gap-1.5 font-medium text-success">
           <span className="h-1.5 w-1.5 rounded-full bg-success" />
           {t.radar.newThisHour(2)}
@@ -55,6 +64,7 @@ export function ChatPreview() {
   const plan = REPORT_PLANS.idea
   return (
     <div className={cn(frame, "space-y-4 p-5")}>
+      <ExampleTag />
       <p className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm text-white">{t.ask.starters.idea}</p>
       <div className="flex gap-3">
         <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-soft text-sky-ink">
@@ -95,7 +105,10 @@ export function MonitorPreview() {
   return (
     <div className={frame}>
       <div className="border-b border-border bg-subtle px-4 pt-3">
-        <p className="text-xs font-semibold text-foreground">{t.home.previewMonitor}</p>
+        <p className="flex items-center gap-2 text-xs font-semibold text-foreground">
+          {t.home.previewMonitor}
+          <ExampleTag />
+        </p>
         <div className="mt-2 flex gap-4 text-xs">
           {(["mentions", "competitors", "rankings"] as const).map((tab, i) => (
             <span key={tab} className={cn("pb-2", i === 0 ? "border-b-2 border-sky font-semibold text-foreground" : "text-muted-foreground")}>

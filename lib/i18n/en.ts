@@ -1,6 +1,7 @@
 import { accountEn } from './account'
 import { billingEn } from './billing'
 import { referralsEn } from './referrals'
+import { statesEn } from './states'
 
 const growthWindow: Record<string, string> = { '24h': '24h', '48h': '48h', '72h': '72h', '7d': '7d', '30d': '30d' }
 
@@ -260,6 +261,7 @@ export const en = {
     metaDescription: 'Rising keywords and topics that match your interests, updated hourly, with a 30-day view and commercial value.',
     title: 'Trends',
     updated: (roots: number) => `Updated 12 min ago · refreshed hourly · watching ${roots} directions ·`,
+    watching: (roots: number) => `Watching ${roots} directions ·`,
     editRoots: 'Edit',
     newThisHour: (n: number) => `${n} new in the last hour`,
     tabLive: 'Live',
@@ -804,6 +806,7 @@ export const en = {
   account: accountEn,
   billing: billingEn,
   referrals: referralsEn,
+  states: statesEn,
   switcher: {
     label: 'Language',
   },

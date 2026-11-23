@@ -2,6 +2,7 @@ import type { Dictionary } from './en'
 import { accountZh } from './account'
 import { billingZh } from './billing'
 import { referralsZh } from './referrals'
+import { statesZh } from './states'
 
 const growthWindow: Record<string, string> = { '24h': '24 小时', '48h': '48 小时', '72h': '72 小时', '7d': '7 天', '30d': '30 天' }
 
@@ -256,6 +257,7 @@ export const zh: Dictionary = {
     metaDescription: '和你关注方向匹配、正在上涨的关键词和话题，每小时更新，可以看近 30 天走势和商业价值。',
     title: '趋势',
     updated: (roots: number) => `12 分钟前更新 · 每小时刷新 · 关注 ${roots} 个方向 ·`,
+    watching: (roots: number) => `关注 ${roots} 个方向 ·`,
     editRoots: '修改',
     newThisHour: (n: number) => `过去 1 小时新增 ${n} 个`,
     tabLive: '实时',
@@ -785,6 +787,7 @@ export const zh: Dictionary = {
   account: accountZh,
   billing: billingZh,
   referrals: referralsZh,
+  states: statesZh,
   switcher: {
     label: '语言',
   },

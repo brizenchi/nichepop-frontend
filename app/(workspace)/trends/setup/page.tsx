@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { ApiErrorNotice } from "@/components/account/ui"
 import { TagInput } from "@/components/radar/tag-input"
 import { Field, Toggle } from "@/components/radar/form"
 import { buttonStyles, cardStyles, inputStyles } from "@/components/radar/ui"
@@ -32,6 +33,7 @@ export default function WatchlistPage() {
   const { watchlist: savedWatchlist, loaded, save } = useRadarWatchlist()
   const [form, setForm] = useState<RadarWatchlist>(emptyWatchlist)
   const [error, setError] = useState(false)
+  const [saveError, setSaveError] = useState<unknown>(null)
 
   useEffect(() => {
     if (loaded && savedWatchlist) {
@@ -49,9 +51,14 @@ export default function WatchlistPage() {
       setError(true)
       return
     }
-    gate("save", () => {
-      save(form)
-      router.push("/trends")
+    gate("save", async () => {
+      setSaveError(null)
+      try {
+        await save(form)
+        router.push("/trends")
+      } catch (failure) {
+        setSaveError(failure)
+      }
     })
   }
 
@@ -112,6 +119,7 @@ export default function WatchlistPage() {
             <button type="submit" className={cn(buttonStyles.primary, "h-10 w-full")}>
               {t.save}
             </button>
+            <ApiErrorNotice error={saveError} />
           </div>
         </form>
       </main>
