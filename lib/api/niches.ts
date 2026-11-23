@@ -21,9 +21,18 @@ export interface NicheQuery {
   limit?: number
 }
 
+/** Backend #16: RadarWord items, paged as the template's lists, with the header numbers in `meta`. */
 export interface NicheList {
   items: RadarWord[]
   total: number
+  page?: number
+  limit?: number
+  meta?: {
+    /** When the library was last refreshed. */
+    updated_at?: string
+    /** Opportunities found in the last hour that this reader can see. */
+    new_last_hour?: number
+  }
 }
 
 /** A niche (track) for the filter menus. */

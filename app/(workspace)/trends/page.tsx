@@ -48,7 +48,7 @@ export default function TrendsPage() {
   const lockedCount = allWords.filter(isFreshWord).length
   const [lockedBold, lockedRest] = t.radar.lockedBanner(lockedCount, PUBLIC_DELAY_HOURS)
   // The demo header always shows two fresh words; real data counts them.
-  const newThisHour = DEMO_MODE ? 2 : allWords.filter((w) => w.firstSeenHoursAgo < 1).length
+  const newThisHour = DEMO_MODE ? 2 : niches.data?.meta?.new_last_hour ?? allWords.filter((w) => w.firstSeenHoursAgo < 1).length
 
   return (
     <div className="radar-theme min-h-screen bg-radar-bg text-radar-text">
