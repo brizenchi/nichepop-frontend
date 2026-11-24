@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
-import { AtSign, Check, Cloud, Copy, Globe, Newspaper, PenLine, Youtube, type LucideIcon } from "lucide-react"
+import { AtSign, Check, Cloud, Copy, Globe, MessagesSquare, Music2, Newspaper, PenLine, Youtube, type LucideIcon } from "lucide-react"
 import { useT } from "@/components/i18n/locale-provider"
 import { cn } from "@/lib/utils"
 import type { Mention, MentionIntent, MentionSource } from "@/lib/types"
 
-const SOURCE_ICONS: Record<MentionSource, LucideIcon> = { x: AtSign, hn: Newspaper, bluesky: Cloud, youtube: Youtube, web: Globe }
+const SOURCE_ICONS: Record<MentionSource, LucideIcon> = { x: AtSign, hn: Newspaper, bluesky: Cloud, youtube: Youtube, web: Globe, reddit: MessagesSquare, tiktok: Music2 }
 
 export const INTENT_STYLES: Record<MentionIntent, string> = {
   alternatives: "bg-success-soft text-success",
@@ -25,7 +25,7 @@ export function MentionCard({ mention, showDraft = true, context }: { mention: M
   const t = useT().mentions
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
-  const Icon = SOURCE_ICONS[mention.source]
+  const Icon = SOURCE_ICONS[mention.source] ?? Globe
 
   const copy = async () => {
     if (!mention.replyDraft) return
@@ -40,7 +40,7 @@ export function MentionCard({ mention, showDraft = true, context }: { mention: M
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
         <Icon className="h-3.5 w-3.5" aria-label={t.sources[mention.source]} />
         <span className="font-medium text-foreground">{mention.author}</span>
-        <span>· {t.ago(mention.hoursAgo)}</span>
+        <span>· {mention.hoursAgo === null ? t.agoUnknown : t.ago(mention.hoursAgo)}</span>
         <span className="ml-auto flex items-center gap-1.5">
           {isHighIntent(mention) && <span className="rounded-md bg-primary px-1.5 py-0.5 text-[11px] font-semibold text-white">{t.highIntent}</span>}
           <span className={cn("rounded-md px-1.5 py-0.5 text-[11px] font-semibold", INTENT_STYLES[mention.intent])}>{t.intents[mention.intent]}</span>

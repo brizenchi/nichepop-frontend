@@ -27,7 +27,7 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   if (!report) return { title: t.notFound }
 
   // Words still inside the Pro window stay out of search results until it passes.
-  const fresh = report.kind === "keyword" && report.wordAgeHours < PUBLIC_DELAY_HOURS
+  const fresh = report.kind === "keyword" && report.wordAgeHours !== null && report.wordAgeHours < PUBLIC_DELAY_HOURS
   const title = t.meta[report.kind](report.query)
   const path = `/r/${id}`
   return {
