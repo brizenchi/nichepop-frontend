@@ -2,12 +2,14 @@
 
 import Link from "next/link"
 import { ArrowUpRight, Hash, Map, Package, Plus, Swords, Zap } from "lucide-react"
-import { useLocale, useT } from "@/components/i18n/locale-provider"
+import { AccountGate } from "@/components/account/ui"
+import { useT } from "@/components/i18n/locale-provider"
 import { usePlan } from "@/components/monitors/use-plan"
 import { isHighIntent } from "@/components/radar/mention-card"
 import { buttonStyles, cardStyles } from "@/components/radar/ui"
-import { useMonitors } from "@/hooks/use-monitors"
-import { getMonitorFeed } from "@/lib/data/monitors"
+import { EmptyState, ErrorState, LoadingState } from "@/components/workspace/resource-states"
+import { useMonitorFeed, useMonitors } from "@/hooks/use-monitors"
+import { DEMO_MODE } from "@/lib/demo"
 import { cn } from "@/lib/utils"
 import type { Monitor } from "@/lib/types"
 
@@ -23,10 +25,10 @@ function QuotaBar({ label, used, max }: { label: string; used: number; max: numb
 }
 
 function MonitorCard({ monitor }: { monitor: Monitor }) {
-  const locale = useLocale()
-  const t = useT().monitors
+  const dict = useT()
+  const t = dict.monitors
   const { limits } = usePlan()
-  const feed = getMonitorFeed(monitor.id, locale)
+  const { data: feed } = useMonitorFeed(monitor.id)
   const KindIcon = monitor.kind === "keyword" ? Hash : monitor.kind === "market" ? Map : Package
   const stats = feed
     ? [
@@ -44,6 +46,7 @@ function MonitorCard({ monitor }: { monitor: Monitor }) {
           {t.kinds[monitor.kind]}
         </span>
         {monitor.demo && <span className="rounded-md bg-primary-soft px-1.5 py-0.5 font-medium text-primary">{t.example}</span>}
+        {monitor.status === "paused" && <span className="rounded-md bg-muted px-1.5 py-0.5 font-medium text-muted-foreground">{dict.states.paused}</span>}
         <span className="ml-auto">{feed ? t.checked(feed.lastCheckedMinutes, limits.checkEvery === "hour") : t.firstCheck}</span>
       </div>
       <p className="mt-3 text-base font-semibold text-foreground group-hover:text-primary">{monitor.name}</p>
@@ -73,8 +76,6 @@ function MonitorCard({ monitor }: { monitor: Monitor }) {
 export default function MonitorsPage() {
   const t = useT()
   const tm = t.monitors
-  const { monitors, custom, loaded } = useMonitors()
-  const { limits, xPostsUsed } = usePlan()
 
   return (
     <div className="radar-theme min-h-screen bg-radar-bg text-radar-text">
@@ -91,19 +92,60 @@ export default function MonitorsPage() {
           </Link>
         </header>
 
-        <div className={cn("mt-6 flex flex-col gap-3 sm:flex-row", !loaded && "invisible")}>
-          <QuotaBar label={tm.quotaMonitors(custom.length, limits.monitors)} used={custom.length} max={limits.monitors} />
-          <QuotaBar label={limits.xPosts > 0 ? tm.quotaPosts(xPostsUsed, limits.xPosts) : tm.xQuotaLocked} used={xPostsUsed} max={limits.xPosts} />
-        </div>
+        {/* Real builds keep monitors on the account; demo builds show the examples to anyone. */}
+        {DEMO_MODE ? (
+          <MonitorList />
+        ) : (
+          <div className="mt-6">
+            <AccountGate>
+              <MonitorList />
+            </AccountGate>
+          </div>
+        )}
 
+        {DEMO_MODE && <p className="mt-6 text-xs text-muted-foreground">{t.common.demoNote}</p>}
+      </main>
+    </div>
+  )
+}
+
+function MonitorList() {
+  const t = useT()
+  const tm = t.monitors
+  const { monitors, custom, loaded, error, reload } = useMonitors()
+  const { limits, xPostsUsed } = usePlan()
+  // Paused monitors do not count towards the plan.
+  const active = custom.filter((monitor) => monitor.status !== "paused").length
+
+  if (error) return <ErrorState error={error} onRetry={() => void reload()} className="mt-6" />
+  if (!loaded) return <LoadingState className="mt-6" />
+
+  return (
+    <>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <QuotaBar label={tm.quotaMonitors(active, limits.monitors)} used={active} max={limits.monitors} />
+        <QuotaBar label={limits.xPosts > 0 ? tm.quotaPosts(xPostsUsed, limits.xPosts) : tm.xQuotaLocked} used={xPostsUsed} max={limits.xPosts} />
+      </div>
+
+      {monitors.length === 0 ? (
+        <EmptyState
+          className="mt-6"
+          title={t.states.noMonitors}
+          text={t.states.noMonitorsText}
+          action={
+            <Link href="/monitors/new" className={cn(buttonStyles.primary, "h-9")}>
+              <Plus className="h-4 w-4" />
+              {t.states.createMonitor}
+            </Link>
+          }
+        />
+      ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           {monitors.map((monitor) => (
             <MonitorCard key={monitor.id} monitor={monitor} />
           ))}
         </div>
-
-        <p className="mt-6 text-xs text-muted-foreground">{t.common.demoNote}</p>
-      </main>
-    </div>
+      )}
+    </>
   )
 }

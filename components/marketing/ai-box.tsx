@@ -6,6 +6,7 @@ import { ArrowUp, Zap } from "lucide-react"
 import { useLocale, useT } from "@/components/i18n/locale-provider"
 import { PUBLIC_DELAY_HOURS, getDemoWords } from "@/lib/data/radar"
 import { REPORT_KINDS } from "@/lib/data/reports"
+import { DEMO_MODE } from "@/lib/demo"
 
 /** The homepage's main call to action: ask a question, land in the workspace chat with it already asked. */
 export function AiBox() {
@@ -15,9 +16,12 @@ export function AiBox() {
   const [value, setValue] = useState("")
   const [focused, setFocused] = useState(false)
   const [burst, setBurst] = useState(0)
-  const fresh = getDemoWords(locale)
-    .filter((w) => w.verdict === "build" && w.firstSeenHoursAgo < PUBLIC_DELAY_HOURS)
-    .sort((a, b) => a.firstSeenHoursAgo - b.firstSeenHoursAgo)[0]
+  // The "live trend" chip is a demo word; real builds leave it out until the trend library (frontend#8) feeds it.
+  const fresh = DEMO_MODE
+    ? getDemoWords(locale)
+        .filter((w) => w.verdict === "build" && w.firstSeenHoursAgo < PUBLIC_DELAY_HOURS)
+        .sort((a, b) => a.firstSeenHoursAgo - b.firstSeenHoursAgo)[0]
+    : undefined
 
   const go = (question: string) => router.push(`/ask?${new URLSearchParams({ q: question.trim() }).toString()}`)
 

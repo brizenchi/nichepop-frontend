@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect, useMemo, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AlertTriangle, ArrowLeft, BarChart3, Check, CheckCircle2, Clock, Hash, Map, Package } from "lucide-react"
@@ -10,10 +10,11 @@ import { PricingModal } from "@/components/pricing-modal"
 import { Field, Toggle } from "@/components/radar/form"
 import { TagInput } from "@/components/radar/tag-input"
 import { buttonStyles, cardStyles, inputStyles } from "@/components/radar/ui"
-import { useMonitors } from "@/hooks/use-monitors"
+import { ApiErrorNotice } from "@/components/account/ui"
+import { useMonitors, useXEstimate } from "@/hooks/use-monitors"
 import { useAuthGate } from "@/hooks/use-auth-gate"
 import { cleanDomain } from "@/lib/utils/domain"
-import { defaultXQuery, estimateDailyPosts, narrowXQuery, quotaFit } from "@/lib/data/monitors"
+import { defaultXQuery, narrowXQuery, quotaFit } from "@/lib/data/monitors"
 import { cn } from "@/lib/utils"
 import type { MonitorKind, MonitorTrack } from "@/lib/types"
 
@@ -54,6 +55,8 @@ function NewMonitorForm() {
   const [webhook, setWebhook] = useState("")
   const [gscConnected, setGscConnected] = useState(false)
   const [error, setError] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<unknown>(null)
   const [showPricing, setShowPricing] = useState(false)
 
   // Prefill from "Build it" on the radar or "Monitor this" in Ask AI.
@@ -80,9 +83,10 @@ function NewMonitorForm() {
     if (!queryEdited) setXQuery(defaultXQuery(kind, name))
   }, [kind, name, queryEdited])
 
-  const daily = useMemo(() => estimateDailyPosts(xQuery), [xQuery])
-  const fit = quotaFit(daily, xPostsLeft)
-  const atLimit = loaded && custom.length >= limits.monitors
+  const daily = useXEstimate(xQuery, !xLocked && tracks.includes("mentions"))
+  const fit = quotaFit(daily ?? 0, xPostsLeft)
+  // Paused monitors do not count towards the plan.
+  const atLimit = loaded && custom.filter((monitor) => monitor.status !== "paused").length >= limits.monitors
   const toggleTrack = (track: MonitorTrack, on: boolean) => setTracks((prev) => (on ? [...prev, track] : prev.filter((x) => x !== track)))
 
   const submit = (e: React.FormEvent) => {
@@ -94,23 +98,30 @@ function NewMonitorForm() {
     gate("monitor", create)
   }
 
-  const create = () => {
+  const create = async () => {
     const product = kind === "product"
     const monitorTracks = kind === "market" ? tracks.filter((track) => track !== "rankings") : tracks
-    const monitor = add({
-      kind,
-      name: product ? cleanDomain(name) : kind === "market" ? name.trim() : name.trim().toLowerCase(),
-      description: kind === "keyword" ? "" : description.trim(),
-      site: product ? cleanDomain(name) : cleanDomain(site),
-      xQuery,
-      competitors,
-      rankKeywords: kind === "market" ? [] : rankKeywords,
-      tracks: monitorTracks,
-      delivery: realtime && limits.checkEvery === "hour" ? "realtime" : "digest",
-      channels,
-      webhook: webhook.trim() || undefined,
-    })
-    router.push(`/monitors/${monitor.id}`)
+    setSaving(true)
+    setSaveError(null)
+    try {
+      const monitor = await add({
+        kind,
+        name: product ? cleanDomain(name) : kind === "market" ? name.trim() : name.trim().toLowerCase(),
+        description: kind === "keyword" ? "" : description.trim(),
+        site: product ? cleanDomain(name) : cleanDomain(site),
+        xQuery,
+        competitors,
+        rankKeywords: kind === "market" ? [] : rankKeywords,
+        tracks: monitorTracks,
+        delivery: realtime && limits.checkEvery === "hour" ? "realtime" : "digest",
+        channels,
+        webhook: webhook.trim() || undefined,
+      })
+      router.push(`/monitors/${monitor.id}`)
+    } catch (failure) {
+      setSaveError(failure)
+      setSaving(false)
+    }
   }
 
   const fitStyles = {
@@ -240,7 +251,7 @@ function NewMonitorForm() {
                   placeholder={kind === "keyword" ? '"driftbound codes" -is:retweet' : '("yourproduct" OR "yourproduct.com") -is:retweet'}
                   className={cn(inputStyles, "font-mono text-[13px]")}
                 />
-                {xQuery.trim() && (
+                {xQuery.trim() && daily !== null && (
                   <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-3 py-2.5 text-sm", fitStyles.className)}>
                     <fitStyles.icon className="h-4 w-4 shrink-0" />
                     <span className="font-medium">{t.estimate(daily)}</span>
@@ -352,10 +363,11 @@ function NewMonitorForm() {
                 </button>
               </div>
             ) : (
-              <button type="submit" className={cn(buttonStyles.primary, "h-10 w-full")}>
+              <button type="submit" disabled={saving} className={cn(buttonStyles.primary, "h-10 w-full")}>
                 {t.save}
               </button>
             )}
+            <ApiErrorNotice error={saveError} />
           </div>
         </form>
       </main>

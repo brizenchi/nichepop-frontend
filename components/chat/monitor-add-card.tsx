@@ -7,8 +7,9 @@ import { useT } from "@/components/i18n/locale-provider"
 import { usePlan } from "@/components/monitors/use-plan"
 import { buttonStyles, cardStyles } from "@/components/radar/ui"
 import { useAuthGate } from "@/hooks/use-auth-gate"
-import { useMonitors } from "@/hooks/use-monitors"
-import { estimateDailyPosts, quotaFit, type MonitorDraft } from "@/lib/data/monitors"
+import { ApiErrorNotice } from "@/components/account/ui"
+import { useMonitors, useXEstimate } from "@/hooks/use-monitors"
+import { quotaFit, type MonitorDraft } from "@/lib/data/monitors"
 import { cn } from "@/lib/utils"
 import type { MonitorTrack } from "@/lib/types"
 
@@ -24,11 +25,12 @@ export function MonitorAddCard({ draft, onCancel, onUpgrade }: { draft: MonitorD
   const { gate, dialog } = useAuthGate()
   const [tracks, setTracks] = useState<MonitorTrack[]>(draft.tracks)
   const [addedId, setAddedId] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<unknown>(null)
 
   const existing = monitors.find((m) => m.kind === draft.kind && m.name.toLowerCase() === draft.name.toLowerCase())
   const xLocked = limits.xPosts === 0
-  const daily = estimateDailyPosts(draft.xQuery)
-  const fit = quotaFit(daily, xPostsLeft)
+  const daily = useXEstimate(draft.xQuery, !xLocked && tracks.includes("mentions"))
+  const fit = quotaFit(daily ?? 0, xPostsLeft)
   const available = draft.kind === "keyword" || draft.kind === "product" ? ALL_TRACKS : ALL_TRACKS.filter((track) => track !== "rankings")
 
   if (addedId || existing) {
@@ -44,7 +46,8 @@ export function MonitorAddCard({ draft, onCancel, onUpgrade }: { draft: MonitorD
     )
   }
 
-  if (custom.length >= limits.monitors) {
+  // Paused monitors do not count towards the plan.
+  if (custom.filter((monitor) => monitor.status !== "paused").length >= limits.monitors) {
     return (
       <div className={cn(cardStyles, "flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between")}>
         <p className="text-sm text-body">{t.limitReached(limits.monitors)}</p>
@@ -56,9 +59,14 @@ export function MonitorAddCard({ draft, onCancel, onUpgrade }: { draft: MonitorD
   }
 
   const confirm = () =>
-    gate("monitor", () => {
-      const created = add({ ...draft, tracks, delivery: limits.checkEvery === "hour" ? "realtime" : "digest" })
-      setAddedId(created.id)
+    gate("monitor", async () => {
+      setSaveError(null)
+      try {
+        const created = await add({ ...draft, tracks, delivery: limits.checkEvery === "hour" ? "realtime" : "digest" })
+        setAddedId(created.id)
+      } catch (failure) {
+        setSaveError(failure)
+      }
     })
 
   return (
@@ -91,7 +99,7 @@ export function MonitorAddCard({ draft, onCancel, onUpgrade }: { draft: MonitorD
           })}
         </div>
       </div>
-      {tracks.includes("mentions") && !xLocked && (
+      {tracks.includes("mentions") && !xLocked && daily !== null && (
         <p className="text-xs text-muted-foreground">
           <span className="font-mono text-body">{draft.xQuery}</span> · {t.estimate(daily)} ·{" "}
           <span className={cn(fit.status === "ok" ? "text-success" : fit.status === "tight" ? "text-warning" : "text-destructive")}>
@@ -112,6 +120,7 @@ export function MonitorAddCard({ draft, onCancel, onUpgrade }: { draft: MonitorD
           {ta.cancel}
         </button>
       </div>
+      <ApiErrorNotice error={saveError} />
       {dialog}
     </div>
   )

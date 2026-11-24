@@ -1,32 +1,26 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
-import { RADAR_WATCHLIST_KEY } from "@/lib/storageKeys"
+import { useCallback } from "react"
+import { useAccount } from "@/hooks/use-account"
+import { useResource } from "@/hooks/use-resource"
+import { getWatchlist, saveWatchlist } from "@/lib/api/subscriptions"
+import { DEMO_MODE } from "@/lib/demo"
 import type { RadarWatchlist } from "@/lib/types"
 
-// Watchlist is kept in localStorage until the Radar backend endpoints exist.
+/** The roots and sites the reader follows (lib/api/subscriptions.ts); real builds keep it on the account. */
 export function useRadarWatchlist() {
-  const [watchlist, setWatchlist] = useState<RadarWatchlist | null>(null)
-  const [loaded, setLoaded] = useState(false)
+  const { ready, isAuthenticated } = useAccount()
+  const watchlist = useResource(DEMO_MODE || isAuthenticated ? getWatchlist : null)
+  const { reload } = watchlist
 
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(RADAR_WATCHLIST_KEY)
-      const parsed = stored ? JSON.parse(stored) : null
-      // Ignore watchlists saved by the earlier site/competitor version of the radar.
-      if (parsed && Array.isArray(parsed.roots)) {
-        setWatchlist(parsed)
-      }
-    } catch {
-      window.localStorage.removeItem(RADAR_WATCHLIST_KEY)
-    }
-    setLoaded(true)
-  }, [])
+  const save = useCallback(
+    async (next: RadarWatchlist) => {
+      const saved = await saveWatchlist(next)
+      await reload()
+      return saved
+    },
+    [reload],
+  )
 
-  const save = useCallback((next: RadarWatchlist) => {
-    window.localStorage.setItem(RADAR_WATCHLIST_KEY, JSON.stringify(next))
-    setWatchlist(next)
-  }, [])
-
-  return { watchlist, loaded, save }
+  return { watchlist: watchlist.data, loaded: ready && !watchlist.loading, error: watchlist.error, save }
 }

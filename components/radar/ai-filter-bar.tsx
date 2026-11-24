@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ArrowRight, Sparkles } from "lucide-react"
 import { useT } from "@/components/i18n/locale-provider"
+import { DEMO_MODE } from "@/lib/demo"
 import { cn } from "@/lib/utils"
 import { parseAiFilter } from "@/lib/utils/ai-filter"
 import { DEFAULT_FILTERS, activeFilterChips, type RadarFilters } from "@/lib/utils/radar-filters"
@@ -80,7 +81,7 @@ export function AiFilterBar({ onApply }: AiFilterBarProps) {
                 {label}
               </span>
             ))}
-            <span className="ml-auto text-[11px] text-faint">{t.aiFilter.demoNote}</span>
+            {DEMO_MODE && <span className="ml-auto text-[11px] text-faint">{t.aiFilter.demoNote}</span>}
           </>
         )}
       </div>

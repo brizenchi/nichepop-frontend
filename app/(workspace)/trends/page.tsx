@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import Link from "next/link"
 import { Lock, Sparkles } from "lucide-react"
 import { PricingModal } from "@/components/pricing-modal"
@@ -10,9 +10,13 @@ import { LockedWordRow, WordRow } from "@/components/radar/word-row"
 import { TrendsMonthView } from "@/components/trends/month-view"
 import { buttonStyles, cardStyles } from "@/components/radar/ui"
 import { useLocale, useT } from "@/components/i18n/locale-provider"
+import { ComingSoon, EmptyState, ErrorState, LoadingState } from "@/components/workspace/resource-states"
 import { useAccount } from "@/hooks/use-account"
 import { useRadarWatchlist } from "@/hooks/use-radar-watchlist"
-import { PUBLIC_DELAY_HOURS, demoWatchlist, getDemoWords, isFreshWord } from "@/lib/data/radar"
+import { useResource } from "@/hooks/use-resource"
+import { isComingSoon, listNiches } from "@/lib/api/niches"
+import { PUBLIC_DELAY_HOURS, demoWatchlist, isFreshWord } from "@/lib/data/radar"
+import { DEMO_MODE } from "@/lib/demo"
 import { cn } from "@/lib/utils"
 import { DEFAULT_FILTERS, applyFilters, type RadarFilters } from "@/lib/utils/radar-filters"
 
@@ -31,15 +35,20 @@ export default function TrendsPage() {
   const [view, setView] = useState<View>("live")
 
   const isPaidMember = accountPlan !== "free"
-  const plan: PreviewPlan = previewPlan ?? (isPaidMember ? "pro" : "free")
-  const watchlist = savedWatchlist ?? demoWatchlist
+  // Previewing the other plan is a demo feature; real readers see their own plan.
+  const plan: PreviewPlan = (DEMO_MODE ? previewPlan : null) ?? (isPaidMember ? "pro" : "free")
+  const watchlist = savedWatchlist ?? (DEMO_MODE ? demoWatchlist : null)
 
-  const demoWords = useMemo(() => getDemoWords(locale), [locale])
-  const roots = useMemo(() => Array.from(new Set(demoWords.map((w) => w.root))), [demoWords])
-  const categories = useMemo(() => Array.from(new Set(demoWords.map((w) => w.category))), [demoWords])
-  const words = applyFilters(demoWords, filters)
-  const lockedCount = demoWords.filter(isFreshWord).length
+  const load = useCallback(() => listNiches({ locale }), [locale])
+  const niches = useResource(load)
+  const allWords = useMemo(() => niches.data?.items ?? [], [niches.data])
+  const roots = useMemo(() => Array.from(new Set(allWords.map((w) => w.root))), [allWords])
+  const categories = useMemo(() => Array.from(new Set(allWords.map((w) => w.category))), [allWords])
+  const words = applyFilters(allWords, filters)
+  const lockedCount = allWords.filter(isFreshWord).length
   const [lockedBold, lockedRest] = t.radar.lockedBanner(lockedCount, PUBLIC_DELAY_HOURS)
+  // The demo header always shows two fresh words; real data counts them.
+  const newThisHour = DEMO_MODE ? 2 : niches.data?.meta?.new_last_hour ?? allWords.filter((w) => w.firstSeenHoursAgo < 1).length
 
   return (
     <div className="radar-theme min-h-screen bg-radar-bg text-radar-text">
@@ -49,35 +58,43 @@ export default function TrendsPage() {
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">{t.radar.title}</h1>
             <p className={cn("mt-2 flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground", !loaded && "invisible")}>
-              <span className="relative mr-0.5 flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
-              </span>
-              <span className="font-medium text-success">{t.radar.newThisHour(2)}</span> · {t.radar.updated(watchlist.roots.length)}{" "}
+              {newThisHour > 0 && (
+                <>
+                  <span className="relative mr-0.5 flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
+                  </span>
+                  <span className="font-medium text-success">{t.radar.newThisHour(newThisHour)}</span> ·{" "}
+                </>
+              )}
+              {/* The demo header claims an update time; real builds have none until the trend library reports it (frontend#8). */}
+              {DEMO_MODE ? t.radar.updated(watchlist?.roots.length ?? 0) : t.radar.watching(watchlist?.roots.length ?? 0)}{" "}
               <Link href="/trends/setup" className="font-medium text-primary hover:text-primary-hover">
                 {t.radar.editRoots}
               </Link>
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2" role="group" aria-label={t.radar.previewAs}>
-            <span className="text-xs text-muted-foreground">{t.radar.previewAs}</span>
-            <div className="inline-flex rounded-lg bg-muted p-0.5">
-              {(["free", "pro"] as const).map((option) => (
-                <button
-                  key={option}
-                  onClick={() => setPreviewPlan(option)}
-                  aria-pressed={plan === option}
-                  className={cn(
-                    "rounded-md px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
-                    plan === option ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {option === "free" ? t.radar.previewFree : t.radar.previewPro}
-                </button>
-              ))}
+          {DEMO_MODE && (
+            <div className="flex shrink-0 items-center gap-2" role="group" aria-label={t.radar.previewAs}>
+              <span className="text-xs text-muted-foreground">{t.radar.previewAs}</span>
+              <div className="inline-flex rounded-lg bg-muted p-0.5">
+                {(["free", "pro"] as const).map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => setPreviewPlan(option)}
+                    aria-pressed={plan === option}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+                      plan === option ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {option === "free" ? t.radar.previewFree : t.radar.previewPro}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </header>
 
         <div className="mt-6 inline-flex rounded-lg bg-muted p-0.5" role="tablist">
@@ -103,7 +120,7 @@ export default function TrendsPage() {
           </div>
         )}
 
-        {view === "live" && plan === "free" && (
+        {view === "live" && plan === "free" && lockedCount > 0 && (
           <div className="mt-6 flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary-soft px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="flex items-start gap-2 text-sm text-body">
               <Lock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -132,39 +149,51 @@ export default function TrendsPage() {
                 categories={categories}
                 roots={roots}
                 resultCount={words.length}
-                totalCount={demoWords.length}
+                totalCount={allWords.length}
                 isPro={plan === "pro"}
                 onUpgrade={() => setShowPricing(true)}
               />
             </div>
 
-            <ul className={cn(cardStyles, "mt-4 divide-y divide-border")}>
-              {words.length === 0 && (
-                <li className="px-5 py-10 text-center text-sm text-muted-foreground">
-                  {t.radar.empty}{" "}
-                  <button onClick={() => setFilters(DEFAULT_FILTERS)} className="font-medium text-primary hover:text-primary-hover cursor-pointer">
-                    {t.radar.resetFilters}
-                  </button>
-                </li>
-              )}
-              {words.map((word) =>
-                plan === "free" && isFreshWord(word) ? (
-                  <LockedWordRow key={word.id} word={word} unlockInHours={PUBLIC_DELAY_HOURS - word.firstSeenHoursAgo} />
-                ) : (
-                  <WordRow
-                    key={word.id}
-                    word={word}
-                    askHref={`/ask?q=${encodeURIComponent(word.keyword)}`}
-                    showBuild
-                    expanded={expandedId === word.id}
-                    onToggle={() => setExpandedId(expandedId === word.id ? null : word.id)}
-                  />
-                ),
-              )}
-            </ul>
+            {niches.error ? (
+              isComingSoon(niches.error) ? (
+                <ComingSoon text={t.states.trendsSoon} className="mt-4" />
+              ) : (
+                <ErrorState error={niches.error} onRetry={() => void niches.reload()} className="mt-4" />
+              )
+            ) : niches.loading ? (
+              <LoadingState className="mt-4" />
+            ) : allWords.length === 0 ? (
+              <EmptyState title={t.states.noTrends} className="mt-4" />
+            ) : (
+              <ul className={cn(cardStyles, "mt-4 divide-y divide-border")}>
+                {words.length === 0 && (
+                  <li className="px-5 py-10 text-center text-sm text-muted-foreground">
+                    {t.radar.empty}{" "}
+                    <button onClick={() => setFilters(DEFAULT_FILTERS)} className="font-medium text-primary hover:text-primary-hover cursor-pointer">
+                      {t.radar.resetFilters}
+                    </button>
+                  </li>
+                )}
+                {words.map((word) =>
+                  plan === "free" && isFreshWord(word) ? (
+                    <LockedWordRow key={word.id} word={word} unlockInHours={PUBLIC_DELAY_HOURS - word.firstSeenHoursAgo} />
+                  ) : (
+                    <WordRow
+                      key={word.id}
+                      word={word}
+                      askHref={`/ask?q=${encodeURIComponent(word.keyword)}`}
+                      showBuild
+                      expanded={expandedId === word.id}
+                      onToggle={() => setExpandedId(expandedId === word.id ? null : word.id)}
+                    />
+                  ),
+                )}
+              </ul>
+            )}
 
             <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-              {t.radar.legend} {t.common.demoNote}
+              {t.radar.legend} {DEMO_MODE && t.common.demoNote}
             </p>
           </>
         )}
