@@ -3,11 +3,12 @@
  * fields in snake_case; the feed comes in camelCase, the same as MonitorFeed.
  */
 
-import { demoOr, liveOnly } from '../demo'
+import { demoOr } from '../demo'
 import { estimateDailyPosts, getDemoMonitors, getMonitorFeed as getDemoFeed, type MonitorDraft } from '../data/monitors'
 import type { Locale } from '../i18n'
 import { RADAR_MONITORS_KEY } from '../storageKeys'
-import type { Monitor, MonitorFeed, MonitorKind, MonitorTrack } from '../types'
+import { ApiError } from '../api'
+import type { Monitor, MonitorCheck as MonitorCheckView, MonitorFeed, MonitorKind, MonitorTrack } from '../types'
 import { apiClient, segment } from './client'
 import { readLocal, writeLocal } from './local'
 
@@ -64,7 +65,7 @@ export interface MonitorLimits {
   x_posts_used: number
 }
 
-/** POST /monitors. Kind and name cannot change afterwards. */
+/** POST /monitors. Kind and name cannot change afterwards (PATCH has neither). */
 export interface MonitorInput {
   kind: MonitorKind
   name: string
@@ -95,7 +96,24 @@ export interface XEstimate {
 }
 
 /** The feed before its first check: the API has no time yet. */
-type ApiFeed = Omit<MonitorFeed, 'lastCheckedMinutes'> & { lastCheckedMinutes: number | null }
+type ApiFeed = Omit<MonitorFeed, 'lastCheckedMinutes' | 'lastCheckedAt'> & { lastCheckedMinutes: number | null; lastCheckedAt?: string | null }
+
+const time = (value?: string | null) => {
+  const parsed = value ? Date.parse(value) : NaN
+  return Number.isNaN(parsed) ? undefined : parsed
+}
+
+function checkFromApi(check: MonitorCheck | null): MonitorCheckView | null {
+  if (!check) return null
+  return {
+    ok: check.status === 'succeeded',
+    finishedAt: time(check.finished_at),
+    failures: check.failures ?? 0,
+    error: check.error || undefined,
+    failedFetches: check.failed_fetches ?? 0,
+    notices: check.notices ?? [],
+  }
+}
 
 export function monitorFromApi(row: ApiMonitor): Monitor {
   return {
@@ -113,7 +131,13 @@ export function monitorFromApi(row: ApiMonitor): Monitor {
     webhook: row.webhook || undefined,
     createdAt: Date.parse(row.created_at),
     status: row.status,
-    lastCheckedAt: row.last_checked_at ? Date.parse(row.last_checked_at) : undefined,
+    lastCheckedAt: time(row.last_checked_at),
+    // A paused monitor keeps its old next_run_at, but is not checked.
+    nextCheckAt: row.status === 'active' ? time(row.next_run_at) : undefined,
+    checkEverySeconds: row.interval_seconds || undefined,
+    lastCheck: checkFromApi(row.last_check),
+    pushFailures: row.push_failures ?? 0,
+    lastPushError: row.last_push_error || undefined,
   }
 }
 
@@ -134,9 +158,26 @@ export function monitorInput(draft: MonitorDraft, locale: Locale): MonitorInput 
   }
 }
 
+/**
+ * What an edit changes, for PATCH /monitors/:id. Channels and the webhook are left out:
+ * only email is sent until IM channels exist (backend #25), so whatever was saved stays.
+ */
+export function monitorPatch(draft: MonitorDraft): MonitorPatch {
+  return {
+    description: draft.description,
+    site: draft.site,
+    x_query: draft.xQuery,
+    competitors: draft.competitors,
+    rank_keywords: draft.rankKeywords,
+    tracks: draft.tracks,
+    delivery: draft.delivery,
+  }
+}
+
 /** A monitor that has never been checked has no feed yet, the same as a new demo monitor. */
 export function feedFromApi(feed: ApiFeed): MonitorFeed | null {
-  return feed.lastCheckedMinutes === null ? null : { ...feed, lastCheckedMinutes: feed.lastCheckedMinutes }
+  if (feed.lastCheckedMinutes === null) return null
+  return { ...feed, lastCheckedMinutes: feed.lastCheckedMinutes, lastCheckedAt: feed.lastCheckedAt ?? undefined }
 }
 
 // Demo visits keep the monitors they create in localStorage, in front of the seeded examples.
@@ -164,7 +205,14 @@ export function listMonitors(locale: Locale): Promise<MonitorList> {
 export function getMonitor(id: string, locale: Locale): Promise<Monitor | null> {
   return demoOr(
     () => demoMonitors(locale).find((monitor) => monitor.id === id) ?? null,
-    async () => monitorFromApi(await apiClient.get<ApiMonitor>(`/monitors/${segment(id)}`)),
+    async () => {
+      try {
+        return monitorFromApi(await apiClient.get<ApiMonitor>(`/monitors/${segment(id)}`))
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) return null
+        throw error
+      }
+    },
   )
 }
 
@@ -186,16 +234,36 @@ export function createMonitor(draft: MonitorDraft, locale: Locale): Promise<Moni
   )
 }
 
-export function updateMonitor(id: string, patch: MonitorPatch): Promise<Monitor> {
-  return liveOnly(async () => monitorFromApi(await apiClient.patch<ApiMonitor>(`/monitors/${segment(id)}`, patch)))
+/** Demo builds change the monitors this browser created; the seeded examples cannot change. */
+function changeLocal(id: string, change: (monitor: Monitor) => Monitor): Monitor {
+  const monitors = localMonitors()
+  const index = monitors.findIndex((monitor) => monitor.id === id)
+  if (index < 0) throw new Error('Not available in demo mode')
+  monitors[index] = change(monitors[index])
+  writeLocal(RADAR_MONITORS_KEY, monitors)
+  return monitors[index]
+}
+
+export function updateMonitor(id: string, draft: MonitorDraft): Promise<Monitor> {
+  return demoOr(
+    () => changeLocal(id, (monitor) => ({ ...monitor, ...draft, id: monitor.id, kind: monitor.kind, name: monitor.name, createdAt: monitor.createdAt })),
+    async () => monitorFromApi(await apiClient.patch<ApiMonitor>(`/monitors/${segment(id)}`, monitorPatch(draft))),
+  )
 }
 
 export function pauseMonitor(id: string): Promise<Monitor> {
-  return liveOnly(async () => monitorFromApi(await apiClient.post<ApiMonitor>(`/monitors/${segment(id)}/pause`)))
+  return demoOr(
+    () => changeLocal(id, (monitor) => ({ ...monitor, status: 'paused' })),
+    async () => monitorFromApi(await apiClient.post<ApiMonitor>(`/monitors/${segment(id)}/pause`)),
+  )
 }
 
+/** Refused with PLAN_LIMIT_REACHED when the plan has no free monitor left. */
 export function resumeMonitor(id: string): Promise<Monitor> {
-  return liveOnly(async () => monitorFromApi(await apiClient.post<ApiMonitor>(`/monitors/${segment(id)}/resume`)))
+  return demoOr(
+    () => changeLocal(id, (monitor) => ({ ...monitor, status: 'active' })),
+    async () => monitorFromApi(await apiClient.post<ApiMonitor>(`/monitors/${segment(id)}/resume`)),
+  )
 }
 
 export function deleteMonitor(id: string): Promise<void> {

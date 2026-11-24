@@ -86,8 +86,9 @@ export interface PushSettings {
   timezone: string
   /** Local hour of the daily digest, 0–23. */
   digest_hour: number
-  locale: Locale
-  /** By category, e.g. `realtime`, `daily_digest`, `trend_reports`. */
+  /** Empty: each message follows its monitor's language. */
+  locale: Locale | ''
+  /** By category: `monitor_alerts` (instant alerts), `daily_digest`, `trend_reports`. */
   subscribed: Record<string, boolean>
 }
 

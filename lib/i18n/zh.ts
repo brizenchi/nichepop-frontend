@@ -3,6 +3,7 @@ import { accountZh } from './account'
 import { billingZh } from './billing'
 import { referralsZh } from './referrals'
 import { statesZh } from './states'
+import { monitorManageZh } from './monitors'
 
 const growthWindow: Record<string, string> = { '24h': '24 小时', '48h': '48 小时', '72h': '72 小时', '7d': '7 天', '30d': '30 天' }
 
@@ -594,26 +595,25 @@ export const zh: Dictionary = {
     intents: { pain: '痛点和抱怨', recommendation: '求推荐', advice: '求建议', money: '在谈钱', alternatives: '找替代品', launch: '发布和新闻' },
     themesTitle: '本周主题',
     highIntent: '高意图',
-    sources: { x: 'X', hn: 'Hacker News', bluesky: 'Bluesky', youtube: 'YouTube', web: '网页' },
+    sources: { x: 'X', reddit: 'Reddit', hn: 'Hacker News', bluesky: 'Bluesky', youtube: 'YouTube', web: '网页' },
     ago: (h: number) => (h < 24 ? `${h} 小时前` : `${Math.round(h / 24)} 天前`),
     replyDraft: '回复草稿',
     hideDraft: '收起草稿',
     copy: '复制',
     copied: '已复制',
     all: '全部',
+    original: (source: string) => `在 ${source} 查看原帖`,
   },
   monitors: {
     metaTitle: '监控 - 盯住你在做的词和产品',
     metaDescription: '为你在做的词和你的产品盯住 X 上的讨论、竞品动作、排名和相关热点。',
     title: '监控',
-    intro: '你在盯的产品、赛道和关键词：X 上的舆情、竞品动作、排名变化和相关热点，每周再给你一份该做的事。可以在和 AI 的对话里一键加入，也可以在这里直接添加。',
+    intro: '你在盯的产品、赛道和关键词：X 上的舆情、竞品动作、排名变化和相关热点，再给你一份该做的事。可以在和 AI 的对话里一键加入，也可以在这里直接添加。',
     new: '新建监控',
     quotaMonitors: (used: number, max: number) => `已用 ${used} / ${max} 个监控`,
     quotaPosts: (used: number, max: number) => `本月 X 帖子 ${used.toLocaleString('en-US')} / ${max.toLocaleString('en-US')} 条`,
     kinds: { keyword: '关键词', product: '产品', market: '赛道' },
     tracks: { mentions: '舆情', competitors: '竞品', rankings: '排名', trends: '相关热点' },
-    checked: (min: number, hourly: boolean) => `${min} 分钟前检查 · ${hourly ? '每小时' : '每天'}`,
-    firstCheck: '1 小时内完成首次检查',
     highIntentCount: (n: number) => `${n} 条高意图帖子`,
     rankingsUp: (n: number) => `${n} 个排名上升`,
     movesCount: (n: number) => `${n} 个竞品动作`,
@@ -641,8 +641,6 @@ export const zh: Dictionary = {
     sitePlaceholder: 'yoursite.com',
     gscTitle: 'Google Search Console',
     gscText: '只读权限。排名和增长计划会用你的真实数据，而不是估算值。',
-    connect: '连接',
-    connected: '已连接',
     xSearch: 'X 搜索',
     xSearchHint: 'Pro 每小时检查一次',
     estimate: (n: number) => `预计每天约 ${n.toLocaleString('en-US')} 条`,
@@ -662,8 +660,6 @@ export const zh: Dictionary = {
     xQuotaLocked: 'X 讨论：Pro 功能',
     channels: '推送到',
     channelNames: { email: '邮件', telegram: 'Telegram', discord: 'Discord', slack: 'Slack', feishu: '飞书' },
-    webhook: 'Webhook 地址',
-    webhookHelp: 'Telegram、Discord、Slack 和飞书通过 webhook 推送。',
     delivery: '推送',
     realtime: '高意图帖子即时推送',
     realtimeText: '其他帖子进每日汇总。',
@@ -681,7 +677,7 @@ export const zh: Dictionary = {
     notRanking: '还没有排名',
     rankingsFor: (site: string) => `${site} 的排名`,
     askAbout: '问 AI',
-    suggestionsNote: '每周一根据这个监控的数据生成。',
+    suggestionsNote: '根据这个监控的新动态生成，每天最多一次。',
     pending: '等待首次检查',
     pendingText: '首次检查会在 1 小时内完成。在那之前，可以先打开一个示例监控，看看你会收到什么。',
     seeExample: '看示例',
@@ -788,6 +784,7 @@ export const zh: Dictionary = {
   billing: billingZh,
   referrals: referralsZh,
   states: statesZh,
+  monitorManage: monitorManageZh,
   switcher: {
     label: '语言',
   },

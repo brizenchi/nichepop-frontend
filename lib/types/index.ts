@@ -380,6 +380,14 @@ export interface RadarCompetitorMove {
   change: string
   impact: string
   direction: 'up' | 'down'
+  /** Monitors only (backend #24): what the competitor did; `pages` are new pages found in its sitemap. */
+  what?: 'pages' | 'pricing' | 'ranking'
+  /** The new pages (`pages`). */
+  urls?: string[]
+  /** The page behind the move, e.g. the pricing page. */
+  url?: string
+  /** When the move was found (ISO time). */
+  at?: string
 }
 
 export interface ReportScore {
@@ -401,8 +409,8 @@ export interface ReportSource {
 /** What a report judges: a trending keyword, an idea, an existing product, or a whole market. */
 export type ReportKind = 'keyword' | 'idea' | 'product' | 'market'
 
-/** Sources with official or open APIs, plus the open web through a licensed search API. No Reddit data. */
-export type MentionSource = 'x' | 'hn' | 'bluesky' | 'youtube' | 'web'
+/** Where a post was found. Monitors search all of them (backend #23); wording for readers is frontend#17's. */
+export type MentionSource = 'x' | 'reddit' | 'hn' | 'bluesky' | 'youtube' | 'web'
 
 /**
  * What a post is about, GummySearch-style themes. People asking for a recommendation or an
@@ -421,6 +429,8 @@ export interface Mention {
   replyDraft?: string
   /** Chinese readers get a translation of English posts. */
   translation?: string
+  /** Monitors only: the original post. */
+  url?: string
 }
 
 export interface ReportSerpRow {
@@ -550,8 +560,30 @@ export interface Monitor {
   status?: 'active' | 'paused'
   /** Saved monitors only: when the last check finished. */
   lastCheckedAt?: number
+  /** Saved monitors only: when the next check is due (paused monitors have none). */
+  nextCheckAt?: number
+  /** Saved monitors only: how often it is checked, in seconds (follows the plan). */
+  checkEverySeconds?: number
+  /** Saved monitors only: how the latest check went; null before the first one. */
+  lastCheck?: MonitorCheck | null
+  /** Saved monitors only: alerts that could not be sent in the last 7 days, with the latest reason. */
+  pushFailures?: number
+  lastPushError?: string
   /** Seeded examples that come with demo data. */
   demo?: boolean
+}
+
+/** A saved monitor's latest check (backend `last_check`). */
+export interface MonitorCheck {
+  ok: boolean
+  finishedAt?: number
+  /** Failed checks in a row, the latest included; 0 when the latest one worked. */
+  failures: number
+  error?: string
+  /** Data the latest check could not fetch, though the check itself may have worked. */
+  failedFetches: number
+  /** `x_quota_exhausted`, `daily_limit:<source>`. */
+  notices: string[]
 }
 
 export interface MonitorRanking {
@@ -560,6 +592,8 @@ export interface MonitorRanking {
   change: number
   volume: number
   trend: number[]
+  /** Monitors only: how deep the results were read (10 or 100), so `position: null` means "not in the top N". */
+  depth?: number
 }
 
 export interface MonitorTrend {
@@ -570,6 +604,8 @@ export interface MonitorTrend {
 
 export interface MonitorFeed {
   lastCheckedMinutes: number
+  /** Saved monitors only: when the last check finished (ISO time). */
+  lastCheckedAt?: string
   postsToday: number
   postsThisMonth: number
   mentions: Mention[]
