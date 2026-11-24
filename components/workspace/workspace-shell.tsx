@@ -9,12 +9,11 @@ import { BrandMark } from "@/components/brand-logo"
 import { useLocale, useT } from "@/components/i18n/locale-provider"
 import LoginDialog from "@/components/LoginDialog"
 import { UserMenu } from "@/components/user-menu"
-import { useAuth } from "@/hooks/useAuth"
-import { usePlan } from "@/components/monitors/use-plan"
+import { useAccount } from "@/hooks/use-account"
+import { usePlan, usePoints } from "@/components/monitors/use-plan"
 import { PricingModal } from "@/components/pricing-modal"
 import { buttonStyles } from "@/components/radar/ui"
 import type { Conversation } from "@/lib/data/chat"
-import { DEMO_POINTS_USED } from "@/lib/data/plans"
 import { localizedHref } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import type { ReportKind } from "@/lib/types"
@@ -75,10 +74,10 @@ function SidebarContent({ onNavigate, onUpgrade, onSignIn }: { onNavigate?: () =
   const locale = useLocale()
   const pathname = usePathname()
   const navItems = useNavItems()
-  const { user, isAuthenticated, loading: authLoading } = useAuth()
-  const { plan, limits } = usePlan()
+  const { user, isAuthenticated, ready } = useAccount()
+  const { plan } = usePlan()
   const { spent } = useChatStore()
-  const balance = limits.points - DEMO_POINTS_USED[plan] - spent
+  const { balance, monthly } = usePoints(spent)
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
   return (
@@ -133,9 +132,9 @@ function SidebarContent({ onNavigate, onUpgrade, onSignIn }: { onNavigate?: () =
               {t.ask.usageLink}
             </Link>
           </div>
-          <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">{t.ask.balance(balance)}</p>
+          <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">{balance === null ? "…" : t.ask.balance(balance)}</p>
           <div className="mt-1.5 h-1.5 rounded-full bg-paper-3">
-            <div className="h-1.5 rounded-full bg-sky" style={{ width: `${Math.max(0, (balance / limits.points) * 100)}%` }} />
+            <div className="h-1.5 rounded-full bg-sky" style={{ width: `${balance === null || monthly <= 0 ? 0 : Math.min(100, Math.max(0, (balance / monthly) * 100))}%` }} />
           </div>
           {plan !== "premium" && (
             <button onClick={onUpgrade} className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-hover cursor-pointer">
@@ -148,7 +147,7 @@ function SidebarContent({ onNavigate, onUpgrade, onSignIn }: { onNavigate?: () =
           <div className="min-w-0 flex-1">
             {isAuthenticated && user ? (
               <UserMenu variant="sidebar" />
-            ) : authLoading ? (
+            ) : !ready ? (
               <div className="flex h-11 items-center px-2" aria-busy>
                 <span className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground" />
               </div>
@@ -182,7 +181,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   const t = useT()
   const pathname = usePathname()
   const navItems = useNavItems()
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated } = useAccount()
   const [drawer, setDrawer] = useState(false)
   const [showPricing, setShowPricing] = useState(false)
   const [showLogin, setShowLogin] = useState(false)

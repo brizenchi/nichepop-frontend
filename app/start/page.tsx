@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Check, Layers, Package, Sprout, type LucideIcon } from "lucide-react"
+import { ApiErrorNotice } from "@/components/account/ui"
 import { BrandMark } from "@/components/brand-logo"
 import { LanguageSwitcher } from "@/components/i18n/language-switcher"
 import { useLocale, useT } from "@/components/i18n/locale-provider"
@@ -13,6 +14,7 @@ import { buttonStyles, cardStyles, inputStyles } from "@/components/radar/ui"
 import { useAuthGate } from "@/hooks/use-auth-gate"
 import { useMonitors } from "@/hooks/use-monitors"
 import { useRadarWatchlist } from "@/hooks/use-radar-watchlist"
+import { errorCode } from "@/lib/api/client"
 import { cleanDomain } from "@/lib/utils/domain"
 import { defaultXQuery } from "@/lib/data/monitors"
 import { suggestedRoots } from "@/lib/data/radar"
@@ -55,6 +57,7 @@ export default function StartPage() {
   const [step, setStep] = useState(1)
   const [draft, setDraft] = useState<Draft>({ role: null, roots: [], product: "", description: "" })
   const [error, setError] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<unknown>(null)
 
   // Keep the draft across a Google sign-in round trip; people who already finished go straight to Today.
   useEffect(() => {
@@ -84,31 +87,41 @@ export default function StartPage() {
   const wantsSites = draft.role === "sites" || draft.role === "both"
   const wantsProduct = draft.role === "product" || draft.role === "both"
 
-  const complete = () => {
-    if (wantsSites) {
-      saveWatchlist({ roots: draft.roots, sites: [], delivery: { email: "", realtimeAlerts: limits.checkEvery === "hour" } })
+  const complete = async () => {
+    setSaveError(null)
+    try {
+      if (wantsSites) {
+        await saveWatchlist({ roots: draft.roots, sites: [], delivery: { email: "", realtimeAlerts: limits.checkEvery === "hour" } })
+      }
+      let productDomain = ""
+      if (wantsProduct) {
+        productDomain = cleanDomain(draft.product)
+        const tracks: MonitorTrack[] = limits.xPosts > 0 ? ["mentions", "competitors", "rankings", "trends"] : ["competitors", "rankings", "trends"]
+        try {
+          await addMonitor({
+            kind: "product",
+            name: productDomain,
+            description: draft.description.trim(),
+            site: productDomain,
+            xQuery: defaultXQuery("product", productDomain),
+            competitors: [],
+            rankKeywords: [],
+            tracks,
+            delivery: limits.checkEvery === "hour" ? "realtime" : "digest",
+            channels: ["email"],
+          })
+        } catch (failure) {
+          // Coming back through onboarding: the product is already monitored.
+          if (errorCode(failure) !== "DUPLICATE") throw failure
+        }
+      }
+      window.localStorage.setItem(ONBOARDING_KEY, draft.role ?? "sites")
+      window.localStorage.removeItem(ONBOARDING_DRAFT_KEY)
+      // Product owners start a chat about their product; site builders land on their trends.
+      router.push(wantsProduct ? `/ask?${new URLSearchParams({ q: productDomain }).toString()}` : "/trends")
+    } catch (failure) {
+      setSaveError(failure)
     }
-    let productDomain = ""
-    if (wantsProduct) {
-      productDomain = cleanDomain(draft.product)
-      const tracks: MonitorTrack[] = limits.xPosts > 0 ? ["mentions", "competitors", "rankings", "trends"] : ["competitors", "rankings", "trends"]
-      addMonitor({
-        kind: "product",
-        name: productDomain,
-        description: draft.description.trim(),
-        site: productDomain,
-        xQuery: defaultXQuery("product", productDomain),
-        competitors: [],
-        rankKeywords: [],
-        tracks,
-        delivery: limits.checkEvery === "hour" ? "realtime" : "digest",
-        channels: ["email"],
-      })
-    }
-    window.localStorage.setItem(ONBOARDING_KEY, draft.role ?? "sites")
-    window.localStorage.removeItem(ONBOARDING_DRAFT_KEY)
-    // Product owners start a chat about their product; site builders land on their trends.
-    router.push(wantsProduct ? `/ask?${new URLSearchParams({ q: productDomain }).toString()}` : "/trends")
   }
 
   const finish = () => {
@@ -213,6 +226,7 @@ export default function StartPage() {
                 {error}
               </p>
             )}
+            <ApiErrorNotice error={saveError} />
             <div className="flex items-center justify-between">
               <button onClick={() => setStep(1)} className={cn(buttonStyles.ghost, "h-10 px-2")}>
                 <ArrowLeft className="h-4 w-4" />

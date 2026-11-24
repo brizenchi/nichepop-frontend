@@ -546,6 +546,10 @@ export interface Monitor {
   channels?: string[]
   webhook?: string
   createdAt: number
+  /** Saved monitors only: paused ones are not checked (over the plan's limit, or paused by the user). */
+  status?: 'active' | 'paused'
+  /** Saved monitors only: when the last check finished. */
+  lastCheckedAt?: number
   /** Seeded examples that come with demo data. */
   demo?: boolean
 }

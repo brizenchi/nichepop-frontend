@@ -1,3 +1,15 @@
+import { PHASE_PRODUCTION_BUILD } from 'next/constants.js'
+
+// A production build must know the API and its own address: sign-in, payments
+// and Stripe's return links use them (lib/env.ts). Demo builds run without the API.
+function checkProductionEnv() {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return
+  const missing = ['NEXT_PUBLIC_API_BASE_URL', 'NEXT_PUBLIC_APP_URL'].filter((name) => !process.env[name]?.trim())
+  if (missing.length > 0) {
+    throw new Error(`Set ${missing.join(' and ')} for a production build (e.g. https://api.nichepop.app/api/v1 and https://nichepop.app), or NEXT_PUBLIC_DEMO_MODE=true for a demo without the API.`)
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable React Strict Mode for better development practices
@@ -29,6 +41,15 @@ const nextConfig = {
     optimizeCss: true,
   },
 
+  async redirects() {
+    // The old Google sign-in landing; the API now sends readers to /login (auth.frontend_redirect). The query is kept.
+    const redirects = [{ source: '/auth/callback', destination: '/login', permanent: false }]
+    // The admin dashboard is the go-modules template deployed on its own (docs/template.md).
+    const admin = process.env.NEXT_PUBLIC_ADMIN_URL?.trim().replace(/\/+$/, '')
+    if (admin) redirects.push({ source: '/admin/:path*', destination: `${admin}/admin/:path*`, permanent: false })
+    return redirects
+  },
+
   // Headers for better caching
   async headers() {
     return [
@@ -54,4 +75,7 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+export default function config(phase) {
+  if (phase === PHASE_PRODUCTION_BUILD) checkProductionEnv()
+  return nextConfig
+}

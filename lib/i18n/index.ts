@@ -10,7 +10,7 @@ export const DEFAULT_LOCALE: Locale = 'en'
 export const LOCALE_COOKIE = 'np_locale'
 
 /** App sections: same URL in both languages, language comes from the cookie. */
-const APP_PATHS = ['/trends', '/ask', '/monitors', '/start', '/usage', '/r', '/radar', '/today']
+const APP_PATHS = ['/trends', '/ask', '/monitors', '/start', '/usage', '/r', '/radar', '/today', '/login', '/invite', '/account', '/billing', '/credits', '/referrals']
 
 /** Marketing pages that exist in both languages; Chinese versions live under /zh. */
 export const LOCALIZED_PATHS = ['/', '/new-keywords', '/pricing'] as const

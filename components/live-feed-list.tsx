@@ -5,13 +5,13 @@ import { KeywordDetailDialog } from "@/components/keyword-detail-dialog"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { keywordService } from "@/lib/api"
+import { keywordService } from "@/lib/api/services/keyword.service"
 import type { Keyword } from "@/lib/types"
 import { calculateOpportunityScore, formatNumber, formatCurrency, formatPercentage } from "@/lib/utils/keyword-metrics"
 import { TrendingUp, TrendingDown, Minus, DollarSign, Search, Target, Sparkles, Unlock } from "lucide-react"
 import { UnlockKeywordDialog } from "@/components/unlock-keyword-dialog"
 import { cn } from "@/lib/utils"
-import { useAuth } from "@/hooks/useAuth"
+import { useAccount } from "@/hooks/use-account"
 import LoginDialog from "@/components/LoginDialog"
 
 interface LiveFeedListProps {
@@ -89,7 +89,7 @@ let liveFeedCacheTimestamp: number | null = null
 const LIVE_FEED_CACHE_DURATION = 30 * 1000 // 30秒缓存（live feed 刷新更频繁）
 
 export function LiveFeedList({ sortBy = "trending", filterBy = "all" }: LiveFeedListProps) {
-  const { isAuthenticated, user, refresh } = useAuth()
+  const { isAuthenticated, usage, refresh } = useAccount()
   const [keywords, setKeywords] = useState<Keyword[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedKeywordId, setSelectedKeywordId] = useState<number | null>(null)
@@ -437,7 +437,7 @@ export function LiveFeedList({ sortBy = "trending", filterBy = "all" }: LiveFeed
         open={showUnlockDialog}
         onOpenChange={setShowUnlockDialog}
         keywordName={keywordToUnlock?.keyword || ''}
-        userCredits={user?.credits || 0}
+        userCredits={usage?.credits.balance ?? 0}
         onConfirm={handleUnlockKeyword}
         isUnauthenticated={!isAuthenticated}
         onLoginRequired={() => setShowLoginDialog(true)}

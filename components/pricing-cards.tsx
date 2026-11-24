@@ -1,167 +1,24 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-
 import { Loader2, Check, Minus } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useAuth } from "@/hooks/useAuth"
-import LoginDialog from "@/components/LoginDialog"
-import { stripeService } from "@/lib/api"
-import { toast } from "@/hooks/use-toast"
-import { useLocale, useT } from "@/components/i18n/locale-provider"
-import { localizedHref } from "@/lib/i18n"
+import { usePlanCheckout, type PlanTier } from "@/components/payment/use-plan-checkout"
+import { useT } from "@/components/i18n/locale-provider"
 
 /** Description, features and CTA for each tier live in the dictionaries under pricing.tiers[name]. */
 interface Tier {
-  name: "Free" | "Pro" | "Premium"
+  name: PlanTier
   monthlyPrice: number
   yearlyPrice: number
   popular: boolean
-  stripePriceIds?: {
-    monthly: string
-    yearly: string
-  }
-  stripeLinks?: {
-    monthly: string
-    yearly: string
-  }
 }
 
+// Prices are shown here; what Stripe charges comes from the API's billing.stripe.prices.
 const tiers: Tier[] = [
-  {
-    name: "Free",
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    popular: false,
-  },
-  {
-    name: "Pro",
-    monthlyPrice: 29,
-    yearlyPrice: 290, // Annual price with 17% discount (2 months free)
-    popular: true,
-    stripePriceIds: {
-      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || "",
-      yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY || "",
-    },
-    stripeLinks: {
-      monthly: process.env.NEXT_PUBLIC_STRIPE_LINK_PRO_MONTHLY || "",
-      yearly: process.env.NEXT_PUBLIC_STRIPE_LINK_PRO_YEARLY || "",
-    },
-  },
-  {
-    name: "Premium",
-    monthlyPrice: 59,
-    yearlyPrice: 590, // Annual price with 17% discount (2 months free)
-    popular: false,
-    stripePriceIds: {
-      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PREMIUM_MONTHLY || "",
-      yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PREMIUM_YEARLY || "",
-    },
-    stripeLinks: {
-      monthly: process.env.NEXT_PUBLIC_STRIPE_LINK_PREMIUM_MONTHLY || "",
-      yearly: process.env.NEXT_PUBLIC_STRIPE_LINK_PREMIUM_YEARLY || "",
-    },
-  },
+  { name: "Free", monthlyPrice: 0, yearlyPrice: 0, popular: false },
+  { name: "Pro", monthlyPrice: 29, yearlyPrice: 290, popular: true }, // yearly: 2 months free
+  { name: "Premium", monthlyPrice: 59, yearlyPrice: 590, popular: false },
 ]
-
-/** Billing period, checkout and the login gate, shared by the pricing cards (modal) and the pricing table (page). */
-function usePlanCheckout() {
-  const router = useRouter()
-  const locale = useLocale()
-  const t = useT().pricing
-  const [isYearly, setIsYearly] = useState(false)
-  const { isAuthenticated } = useAuth()
-  const [loginDialogOpen, setLoginDialogOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [processingTier, setProcessingTier] = useState<string | null>(null)
-
-  const handleUpgrade = async (tier: Tier) => {
-    if (tier.name === "Free") {
-      router.push("/start")
-      return
-    }
-
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      setLoginDialogOpen(true)
-      return
-    }
-
-    // Get the price ID based on billing period
-    const priceId = isYearly ? tier.stripePriceIds?.yearly : tier.stripePriceIds?.monthly
-
-    console.log('🔍 Tier selected:', {
-      name: tier.name,
-      isYearly,
-      priceId,
-      hasPriceId: !!priceId,
-    })
-
-    // If no price ID, fall back to stripe link
-    if (!priceId) {
-      console.warn('⚠️ No stripePriceId found, falling back to stripeLink')
-      if (tier.stripeLinks) {
-        const link = isYearly ? tier.stripeLinks.yearly : tier.stripeLinks.monthly
-        window.location.href = link
-      }
-      return
-    }
-
-    console.log('✅ Using API to create checkout session')
-
-    try {
-      setLoading(true)
-      setProcessingTier(tier.name)
-
-      // Build success and cancel URLs
-      const baseUrl = window.location.origin
-      const successUrl = `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`
-      const cancelUrl = `${baseUrl}${localizedHref("/pricing", locale)}`
-
-      console.log('📤 Creating checkout session with:', {
-        price_id: priceId,
-        mode: 'subscription',
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-      })
-
-      // Call backend API to create Checkout Session
-      const session = await stripeService.createCheckout({
-        price_id: priceId,
-        mode: 'subscription',
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-      })
-
-      console.log('✅ Checkout session created:', session)
-      console.log('🔍 Session URL:', session.url)
-      console.log('🔍 Session URL type:', typeof session.url)
-      console.log('🔍 Has URL:', !!session.url)
-
-      // Redirect to Stripe Checkout
-      if (session.url) {
-        console.log('🚀 Redirecting to:', session.url)
-        window.location.href = session.url
-      } else {
-        console.error('❌ No URL in session:', session)
-        throw new Error('No checkout URL returned from server')
-      }
-    } catch (error) {
-      console.error('❌ Failed to create checkout session:', error)
-      toast({
-        title: t.paymentError,
-        description: t.paymentErrorText,
-        variant: "destructive",
-      })
-      setLoading(false)
-      setProcessingTier(null)
-    }
-  }
-
-  const loginDialog = <LoginDialog open={loginDialogOpen} onClose={() => setLoginDialogOpen(false)} />
-  return { isYearly, setIsYearly, loading, processingTier, handleUpgrade, loginDialog }
-}
 
 function BillingToggle({ isYearly, onChange, className }: { isYearly: boolean; onChange: (yearly: boolean) => void; className?: string }) {
   const t = useT().pricing
@@ -193,13 +50,14 @@ const formatPrice = (price: number) => `$${Number.isInteger(price) ? price : pri
 export function PricingCards() {
   const t = useT().pricing
   const freeLabel = useT().plans.free
-  const { isYearly, setIsYearly, loading, processingTier, handleUpgrade, loginDialog } = usePlanCheckout()
+  const { isYearly, setIsYearly, loading, processingTier, handleUpgrade, dialogs, notice } = usePlanCheckout()
 
   return (
     <>
       <div className="mb-10 flex justify-center">
         <BillingToggle isYearly={isYearly} onChange={setIsYearly} />
       </div>
+      {notice && <div className="mb-6">{notice}</div>}
 
       {/* Pricing Cards */}
       <div className="grid gap-6 md:grid-cols-3">
@@ -237,7 +95,7 @@ export function PricingCards() {
               </p>
 
               <button
-                onClick={() => handleUpgrade(tier)}
+                onClick={() => handleUpgrade(tier.name)}
                 disabled={loading}
                 className={cn("btn mt-6 w-full", !tier.popular && "btn--soft")}
               >
@@ -263,7 +121,7 @@ export function PricingCards() {
           )
         })}
       </div>
-      {loginDialog}
+      {dialogs}
     </>
   )
 }
@@ -282,13 +140,14 @@ function TableCell({ value }: { value: string | boolean }) {
 export function PricingTable({ delayHours }: { delayHours: number }) {
   const t = useT().pricing
   const freeLabel = useT().plans.free
-  const { isYearly, setIsYearly, loading, processingTier, handleUpgrade, loginDialog } = usePlanCheckout()
+  const { isYearly, setIsYearly, loading, processingTier, handleUpgrade, dialogs, notice } = usePlanCheckout()
   const rows = t.tableRows(delayHours)
   const columns = ["free", "pro", "premium"] as const
 
   return (
     <>
       <BillingToggle isYearly={isYearly} onChange={setIsYearly} />
+      {notice && <div className="mt-6">{notice}</div>}
 
       <div className="mt-8 overflow-x-auto rounded-2xl bg-card shadow-card ring-1 ring-rule">
         <table className="w-full min-w-[680px] border-collapse text-left text-sm tabular-nums">
@@ -311,7 +170,7 @@ export function PricingTable({ delayHours }: { delayHours: number }) {
                       <span className="text-xs text-muted-foreground">{isYearly ? t.perYear : t.perMonth}</span>
                     </p>
                     <button
-                      onClick={() => handleUpgrade(tier)}
+                      onClick={() => handleUpgrade(tier.name)}
                       disabled={loading}
                       className={cn("btn mt-4 w-full", columns[i] !== "pro" && "btn--soft")}
                     >
@@ -343,7 +202,7 @@ export function PricingTable({ delayHours }: { delayHours: number }) {
           </tbody>
         </table>
       </div>
-      {loginDialog}
+      {dialogs}
     </>
   )
 }

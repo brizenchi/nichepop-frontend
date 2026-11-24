@@ -1,10 +1,14 @@
 "use client"
 
+import { useCallback } from "react"
 import Link from "next/link"
 import { ArrowRight, Eye } from "lucide-react"
 import { useLocale, useT } from "@/components/i18n/locale-provider"
 import { cardStyles } from "@/components/radar/ui"
-import { categoryMomentum, getMonthlyTrends, weeklyNewTrends, type MonthlyTrend } from "@/lib/data/trends"
+import { ComingSoon, ErrorState, LoadingState } from "@/components/workspace/resource-states"
+import { useResource } from "@/hooks/use-resource"
+import { getMonthTrends, isComingSoon } from "@/lib/api/niches"
+import type { MonthlyTrend } from "@/lib/data/trends"
 import { cn } from "@/lib/utils"
 
 function Line({ data, className }: { data: number[]; className?: string }) {
@@ -29,8 +33,15 @@ export function TrendsMonthView() {
   const locale = useLocale()
   const t = useT()
   const tr = t.radar
-  const monthly = getMonthlyTrends(locale)
-  const maxWeek = Math.max(...weeklyNewTrends)
+  const load = useCallback(() => getMonthTrends(locale), [locale])
+  const month = useResource(load)
+
+  if (month.error) {
+    return isComingSoon(month.error) ? <ComingSoon text={t.states.monthSoon} /> : <ErrorState error={month.error} onRetry={() => void month.reload()} />
+  }
+  if (!month.data) return <LoadingState />
+  const { categories: categoryMomentum, weekly: weeklyNewTrends, trends: monthly } = month.data
+  const maxWeek = Math.max(1, ...weeklyNewTrends)
 
   return (
     <div className="space-y-8">

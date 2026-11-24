@@ -6,7 +6,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ArrowRight, Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useAuth } from "@/hooks/useAuth"
+import { useAccount } from "@/hooks/use-account"
 import LoginDialog from "@/components/LoginDialog"
 import { UserMenu } from "@/components/user-menu"
 import { BrandLogo } from "@/components/brand-logo"
@@ -20,7 +20,7 @@ const BANNER_H = 36
 
 export function Navbar() {
   const pathname = usePathname()
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated } = useAccount()
   const [loginDialogOpen, setLoginDialogOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [bannerOpen, setBannerOpen] = useState(false)

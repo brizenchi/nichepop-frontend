@@ -1,98 +1,72 @@
 /**
- * API 客户端基础类
- * 提供统一的请求方法和错误处理
+ * NichePop 页面调用接口用的客户端：走模板的 apiRequest（lib/api.ts），
+ * 带上当前登录的 token，地址来自 NEXT_PUBLIC_API_BASE_URL；401 时清掉登录状态。
+ * 用相对路径引用，lib/api/* 才能在 tests/ 里直接测。
  */
 
-import { apiFetch, ApiError } from '@/lib/auth-utils';
-import { buildApiUrl } from './config';
+import { ApiError, apiRequest, type ApiEnvelope } from '../api';
+import { clearSessionIfToken, readSession } from '../auth';
+import { apiUrl } from '../env';
 
-/**
- * 基础 API 客户端类
- */
+function withQuery(endpoint: string, params?: object): string {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params ?? {})) {
+    if (value !== undefined && value !== null) query.set(key, String(value));
+  }
+  const search = query.toString();
+  return search ? `${endpoint}?${search}` : endpoint;
+}
+
 export class ApiClient {
-  /**
-   * GET 请求
-   */
-  async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
-    const url = this.buildUrl(endpoint, params);
-    return apiFetch<T>(url, {
-      method: 'GET',
-    });
+  private request<T>(endpoint: string, method: string, data?: unknown): Promise<T> {
+    return apiRequest<T>(endpoint, { method, authToken: readSession()?.token, json: data });
+  }
+
+  get<T>(endpoint: string, params?: object): Promise<T> {
+    return this.request<T>(withQuery(endpoint, params), 'GET');
+  }
+
+  post<T>(endpoint: string, data?: unknown): Promise<T> {
+    return this.request<T>(endpoint, 'POST', data);
+  }
+
+  put<T>(endpoint: string, data?: unknown): Promise<T> {
+    return this.request<T>(endpoint, 'PUT', data);
+  }
+
+  patch<T>(endpoint: string, data?: unknown): Promise<T> {
+    return this.request<T>(endpoint, 'PATCH', data);
+  }
+
+  delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, 'DELETE');
   }
 
   /**
-   * POST 请求
+   * For the Agent endpoints that answer 201/202 with the bare object instead of the
+   * envelope (creating a conversation, sending a message, starting a report). Errors
+   * still come in the envelope and become an ApiError, as with apiRequest.
    */
-  async post<T>(endpoint: string, data?: any): Promise<T> {
-    const url = buildApiUrl(endpoint);
-    return apiFetch<T>(url, {
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-    });
-  }
-
-  /**
-   * PUT 请求
-   */
-  async put<T>(endpoint: string, data?: any): Promise<T> {
-    const url = buildApiUrl(endpoint);
-    return apiFetch<T>(url, {
-      method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
-    });
-  }
-
-  /**
-   * PATCH 请求
-   */
-  async patch<T>(endpoint: string, data?: any): Promise<T> {
-    const url = buildApiUrl(endpoint);
-    return apiFetch<T>(url, {
-      method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
-    });
-  }
-
-  /**
-   * DELETE 请求
-   */
-  async delete<T>(endpoint: string): Promise<T> {
-    const url = buildApiUrl(endpoint);
-    return apiFetch<T>(url, {
-      method: 'DELETE',
-    });
-  }
-
-  /**
-   * 构建带查询参数的 URL
-   */
-  private buildUrl(endpoint: string, params?: Record<string, any>): string {
-    const url = buildApiUrl(endpoint);
-
-    if (!params || Object.keys(params).length === 0) {
-      return url;
-    }
-
-    // 过滤掉 undefined 和 null 的参数
-    const filteredParams = Object.entries(params).reduce((acc, [key, value]) => {
-      if (value !== undefined && value !== null) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as Record<string, any>);
-
-    const queryString = new URLSearchParams(
-      Object.entries(filteredParams).map(([key, value]) => [
-        key,
-        String(value),
-      ])
-    ).toString();
-
-    return queryString ? `${url}?${queryString}` : url;
+  async postBare<T>(endpoint: string, data?: unknown): Promise<T> {
+    const token = readSession()?.token;
+    const headers: Record<string, string> = { Accept: 'application/json', 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await fetch(apiUrl(endpoint), { method: 'POST', headers, body: JSON.stringify(data ?? {}), cache: 'no-store' });
+    const body = (response.headers.get('content-type') || '').includes('application/json') ? await response.json() : null;
+    if (response.ok) return body as T;
+    const envelope = body as ApiEnvelope<unknown> | null;
+    if (response.status === 401 && token) clearSessionIfToken(token);
+    throw new ApiError(envelope?.msg?.trim() || `http ${response.status}`, response.status, envelope?.code ?? response.status, envelope?.data, response.headers.get('x-request-id') || '');
   }
 }
 
-/**
- * 导出单例实例
- */
 export const apiClient = new ApiClient();
+
+/** One path segment, escaped. */
+export const segment = (value: string) => encodeURIComponent(value);
+
+/** NichePop's reason for a refusal, from `data.code`: e.g. PLAN_LIMIT_REACHED, DUPLICATE, BUSY, INSUFFICIENT_CREDITS; "" otherwise. */
+export function errorCode(error: unknown): string {
+  const code = error instanceof ApiError ? (error.data as { code?: unknown } | null | undefined)?.code : undefined;
+  return typeof code === 'string' ? code : '';
+}

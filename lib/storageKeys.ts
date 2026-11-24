@@ -3,19 +3,17 @@
  * 使用应用名称作为前缀，避免与其他应用冲突
  */
 
-import { env } from './env';
-
-// 生成带前缀的键名
+// 生成带前缀的键名。前缀和以前一样（未设置 NEXT_PUBLIC_APP_NAME 时为 MyApp），已保存的数据不会丢。
 const createStorageKey = (key: string): string => {
-  const prefix = env.NEXT_PUBLIC_APP_NAME.toLowerCase().replace(/\s+/g, '_');
+  const prefix = (process.env.NEXT_PUBLIC_APP_NAME || 'MyApp').toLowerCase().replace(/\s+/g, '_');
   return `${prefix}_${key}`;
 };
 
 /**
- * 认证相关的存储键
+ * 旧版登录（frontend#6 之前）存的 token 和用户信息，现在只用来清理
  */
-export const TOKEN_KEY = createStorageKey('token');
-export const USER_KEY = createStorageKey('user');
+export const LEGACY_TOKEN_KEY = createStorageKey('token');
+export const LEGACY_USER_KEY = createStorageKey('user');
 
 /**
  * 其他存储键可以在这里添加

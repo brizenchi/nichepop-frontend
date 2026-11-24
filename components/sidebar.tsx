@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { TrendingUp, Search, Bookmark, Settings, CreditCard, User, Rss } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useAuth } from "@/hooks/useAuth"
+import { useAccount } from "@/hooks/use-account"
 import LoginDialog from "@/components/LoginDialog"
 import { UserMenu } from "@/components/user-menu"
 import { BrandMark } from "@/components/brand-logo"
@@ -19,7 +19,8 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { user, isAuthenticated, loading } = useAuth()
+  const { user, isAuthenticated, ready } = useAccount()
+  const loading = !ready
   const [loginDialogOpen, setLoginDialogOpen] = useState(false)
 
   return (

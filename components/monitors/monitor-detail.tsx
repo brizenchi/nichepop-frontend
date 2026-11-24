@@ -1,17 +1,20 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Hash, Hourglass, Map, Package, Trash2 } from "lucide-react"
-import { useLocale, useT } from "@/components/i18n/locale-provider"
+import { AccountGate, ApiErrorNotice } from "@/components/account/ui"
+import { useT } from "@/components/i18n/locale-provider"
 import { ActionList } from "@/components/radar/action-list"
 import { CompetitorMovesList } from "@/components/radar/brief-lists"
 import { INTENT_STYLES, MentionCard, isHighIntent } from "@/components/radar/mention-card"
 import { buttonStyles, cardStyles } from "@/components/radar/ui"
 import { MiniTrend } from "@/components/radar/word-row"
-import { useMonitors } from "@/hooks/use-monitors"
-import { getMonitorFeed } from "@/lib/data/monitors"
+import { ErrorState, LoadingState } from "@/components/workspace/resource-states"
+import { useAccount } from "@/hooks/use-account"
+import { useMonitorFeed, useMonitors } from "@/hooks/use-monitors"
+import { DEMO_MODE } from "@/lib/demo"
 import { cn } from "@/lib/utils"
 import type { MentionIntent, Monitor, MonitorFeed } from "@/lib/types"
 import { usePlan } from "./use-plan"
@@ -138,14 +141,39 @@ function TrendsTab({ feed }: { feed: MonitorFeed }) {
 const TABS: Tab[] = ["mentions", "competitors", "rankings", "trends", "suggestions"]
 
 export function MonitorDetail({ id, initialTab }: { id: string; initialTab?: string }) {
+  const { ready, isAuthenticated } = useAccount()
+  // Real builds keep monitors on the account: signed-out readers are asked to sign in.
+  if (!DEMO_MODE && !(ready && isAuthenticated)) {
+    return (
+      <div className="radar-theme min-h-screen bg-radar-bg text-radar-text">
+        <main className="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
+          <AccountGate>{null}</AccountGate>
+        </main>
+      </div>
+    )
+  }
+  return <MonitorView id={id} initialTab={initialTab} />
+}
+
+function MonitorView({ id, initialTab }: { id: string; initialTab?: string }) {
   const router = useRouter()
-  const locale = useLocale()
   const t = useT().monitors
-  const { monitors, loaded, remove } = useMonitors()
+  const { monitors, loaded, error, reload, remove } = useMonitors()
   const { limits } = usePlan()
   const monitor = monitors.find((m) => m.id === id)
-  const feed = useMemo(() => getMonitorFeed(id, locale), [id, locale])
+  const { data: feed, loading: feedLoading, error: feedError, reload: reloadFeed } = useMonitorFeed(monitor ? id : null)
   const [tab, setTab] = useState<Tab>(TABS.includes(initialTab as Tab) ? (initialTab as Tab) : "mentions")
+  const [deleteError, setDeleteError] = useState<unknown>(null)
+
+  if (error || !loaded) {
+    return (
+      <div className="radar-theme min-h-screen bg-radar-bg text-radar-text">
+        <main className="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
+          {error ? <ErrorState error={error} onRetry={() => void reload()} /> : <LoadingState />}
+        </main>
+      </div>
+    )
+  }
 
   if (!monitor) {
     return (
@@ -227,15 +255,21 @@ export function MonitorDetail({ id, initialTab }: { id: string; initialTab?: str
         </nav>
 
         <div className="mt-5">
-          {!feed ? (
+          {feedError ? (
+            <ErrorState error={feedError} onRetry={() => void reloadFeed()} />
+          ) : feedLoading ? (
+            <LoadingState />
+          ) : !feed ? (
             <div className={cn(cardStyles, "flex flex-col items-start gap-3 p-6")}>
               <Hourglass className="h-5 w-5 text-primary" />
               <p className="text-base font-semibold text-foreground">{t.pending}</p>
               <p className="max-w-xl text-sm text-body">{t.pendingText}</p>
-              <Link href={`/monitors/${exampleId}`} className={cn(buttonStyles.secondary, "h-9")}>
-                {t.seeExample}
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
+              {DEMO_MODE && (
+                <Link href={`/monitors/${exampleId}`} className={cn(buttonStyles.secondary, "h-9")}>
+                  {t.seeExample}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
             </div>
           ) : (
             <>
@@ -267,15 +301,21 @@ export function MonitorDetail({ id, initialTab }: { id: string; initialTab?: str
         {!monitor.demo && (
           <div className="mt-10 border-t border-border pt-6">
             <button
-              onClick={() => {
-                remove(monitor.id)
-                router.push("/monitors")
+              onClick={async () => {
+                setDeleteError(null)
+                try {
+                  await remove(monitor.id)
+                  router.push("/monitors")
+                } catch (failure) {
+                  setDeleteError(failure)
+                }
               }}
               className={cn(buttonStyles.ghost, "h-9 text-destructive hover:text-destructive")}
             >
               <Trash2 className="h-4 w-4" />
               {t.delete}
             </button>
+            <ApiErrorNotice error={deleteError} />
           </div>
         )}
       </main>

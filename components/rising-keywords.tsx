@@ -9,9 +9,9 @@ import { KeywordDetailDialog } from "@/components/keyword-detail-dialog"
 import LoginDialog from "@/components/LoginDialog"
 import { Button } from "@/components/ui/button"
 import { keywordDetails } from "@/lib/data"
-import { keywordService } from "@/lib/api"
+import { keywordService } from "@/lib/api/services/keyword.service"
 import type { Keyword, KeywordListParams, CompetitionLevel } from "@/lib/types"
-import { useAuth } from "@/hooks/useAuth"
+import { useAccount } from "@/hooks/use-account"
 
 interface RisingKeywordsProps {
   showResults?: boolean
@@ -164,7 +164,7 @@ function FilterDropdown({ label, value, options, onChange }: {
 }
 
 export function RisingKeywords({ showResults = false }: RisingKeywordsProps) {
-  const { isAuthenticated, user, refresh } = useAuth()
+  const { isAuthenticated, usage, refresh } = useAccount()
   const [showPricing, setShowPricing] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
   const [shouldShowPricingAfterLogin, setShouldShowPricingAfterLogin] = useState(false)
@@ -588,7 +588,7 @@ export function RisingKeywords({ showResults = false }: RisingKeywordsProps) {
         open={showUnlockDialog}
         onOpenChange={setShowUnlockDialog}
         keywordName={keywordToUnlock?.keyword || ''}
-        userCredits={user?.credits || 0}
+        userCredits={usage?.credits.balance ?? 0}
         onConfirm={handleUnlockKeyword}
         isUnauthenticated={!isAuthenticated}
         onLoginRequired={() => setShowLogin(true)}

@@ -4,7 +4,6 @@
  */
 
 import { apiClient } from '../client';
-import { API_ENDPOINTS } from '../config';
 import type {
   Keyword,
   KeywordDetailData,
@@ -13,6 +12,17 @@ import type {
   KeywordListData,
   UnlockKeywordResponse,
 } from '@/lib/types';
+
+/** 旧版 /dashboard 用的关键词接口（frontend#16 删除旧版后一起删掉）。 */
+const KEYWORD = {
+  LIST: '/keyword/list',
+  DETAIL: (id: number) => `/keyword/detail/${id}`,
+  CREATE: '/keyword',
+  UPDATE: (id: number) => `/keyword/${id}`,
+  DELETE: (id: number) => `/keyword/${id}`,
+  SEARCH: '/keyword/search',
+  UNLOCK: (id: number) => `/keyword/unlock/${id}`,
+} as const;
 
 /**
  * Keyword 服务类
@@ -27,7 +37,7 @@ class KeywordService {
     // apiClient.get 已经通过 unwrapApiResponse 自动解包了 data 字段
     // 返回的是 { items: [], total: number, limit: number, offset: number, total_pages: number }
     return apiClient.get<KeywordListData>(
-      API_ENDPOINTS.KEYWORD.LIST,
+      KEYWORD.LIST,
       params
     );
   }
@@ -38,7 +48,7 @@ class KeywordService {
    * @returns 关键词详情
    */
   async getDetail(id: number): Promise<KeywordDetailData> {
-    return apiClient.get<KeywordDetailData>(API_ENDPOINTS.KEYWORD.DETAIL(id));
+    return apiClient.get<KeywordDetailData>(KEYWORD.DETAIL(id));
   }
 
   /**
@@ -47,7 +57,7 @@ class KeywordService {
    * @returns 创建的关键词
    */
   async create(data: Partial<Keyword>): Promise<Keyword> {
-    return apiClient.post<Keyword>(API_ENDPOINTS.KEYWORD.CREATE, data);
+    return apiClient.post<Keyword>(KEYWORD.CREATE, data);
   }
 
   /**
@@ -57,7 +67,7 @@ class KeywordService {
    * @returns 更新后的关键词
    */
   async update(id: number, data: Partial<Keyword>): Promise<Keyword> {
-    return apiClient.put<Keyword>(API_ENDPOINTS.KEYWORD.UPDATE(id), data);
+    return apiClient.put<Keyword>(KEYWORD.UPDATE(id), data);
   }
 
   /**
@@ -65,7 +75,7 @@ class KeywordService {
    * @param id - 关键词 ID
    */
   async delete(id: number): Promise<void> {
-    return apiClient.delete<void>(API_ENDPOINTS.KEYWORD.DELETE(id));
+    return apiClient.delete<void>(KEYWORD.DELETE(id));
   }
 
   /**
@@ -77,7 +87,7 @@ class KeywordService {
   async search(query: string, params?: Omit<KeywordListParams, 'search'>): Promise<KeywordListData> {
     // apiClient.get 已经通过 unwrapApiResponse 自动解包了 data 字段
     return apiClient.get<KeywordListData>(
-      API_ENDPOINTS.KEYWORD.SEARCH,
+      KEYWORD.SEARCH,
       { ...params, search: query }
     );
   }
@@ -88,7 +98,7 @@ class KeywordService {
    * @returns 解锁响应
    */
   async unlock(id: number): Promise<UnlockKeywordResponse> {
-    return apiClient.post<UnlockKeywordResponse>(API_ENDPOINTS.KEYWORD.UNLOCK(id), {});
+    return apiClient.post<UnlockKeywordResponse>(KEYWORD.UNLOCK(id), {});
   }
 }
 

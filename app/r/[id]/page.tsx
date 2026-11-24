@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { cache } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ArrowRight, Sparkles } from "lucide-react"
@@ -6,10 +7,13 @@ import { Footer } from "@/components/footer"
 import { LocaleProvider } from "@/components/i18n/locale-provider"
 import { Navbar } from "@/components/navbar"
 import { ReportView } from "@/components/radar/report-view"
+import { getSharedReport } from "@/lib/api/reports"
 import { PUBLIC_DELAY_HOURS } from "@/lib/data/radar"
-import { findReport } from "@/lib/data/reports"
-import { getDictionary } from "@/lib/i18n"
+import { getDictionary, type Locale } from "@/lib/i18n"
 import { getRequestLocale } from "@/lib/i18n/server"
+
+// The metadata and the page read the same shared report once per request.
+const loadReport = cache(async (shareId: string, locale: Locale) => (await getSharedReport(shareId, locale))?.report ?? null)
 
 type Params = { id: string }
 type SearchParams = { lang?: string }
@@ -19,13 +23,13 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   const { lang } = await searchParams
   const locale = await getRequestLocale(lang)
   const t = getDictionary(locale).share
-  const report = findReport(id, locale)
+  const report = await loadReport(id, locale)
   if (!report) return { title: t.notFound }
 
   // Words still inside the Pro window stay out of search results until it passes.
   const fresh = report.kind === "keyword" && report.wordAgeHours < PUBLIC_DELAY_HOURS
   const title = t.meta[report.kind](report.query)
-  const path = `/r/${report.id}`
+  const path = `/r/${id}`
   return {
     title,
     description: report.headline,
@@ -44,7 +48,7 @@ export default async function SharedReportPage({ params, searchParams }: { param
   const { lang } = await searchParams
   const locale = await getRequestLocale(lang)
   const t = getDictionary(locale).share
-  const report = findReport(id, locale)
+  const report = await loadReport(id, locale)
   if (!report) notFound()
   const cta = t.cta[report.kind]
   // Keyword readers often want the same word checked; for products and sites they bring their own.

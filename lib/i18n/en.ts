@@ -1,3 +1,8 @@
+import { accountEn } from './account'
+import { billingEn } from './billing'
+import { referralsEn } from './referrals'
+import { statesEn } from './states'
+
 const growthWindow: Record<string, string> = { '24h': '24h', '48h': '48h', '72h': '72h', '7d': '7d', '30d': '30d' }
 
 export const en = {
@@ -256,6 +261,7 @@ export const en = {
     metaDescription: 'Rising keywords and topics that match your interests, updated hourly, with a 30-day view and commercial value.',
     title: 'Trends',
     updated: (roots: number) => `Updated 12 min ago · refreshed hourly · watching ${roots} directions ·`,
+    watching: (roots: number) => `Watching ${roots} directions ·`,
     editRoots: 'Edit',
     newThisHour: (n: number) => `${n} new in the last hour`,
     tabLive: 'Live',
@@ -531,8 +537,10 @@ export const en = {
         cta: 'Upgrade to Premium',
       },
     } as Record<string, { description: string; features: string[]; cta: string }>,
-    paymentError: 'Payment Error',
-    paymentErrorText: 'Failed to start payment process. Please try again.',
+    currentPlan: "You're already on this plan.",
+    reviewBilling: 'Review your subscription in Plan & billing before changing it.',
+    unavailable: "This plan isn't on sale right now. Please try again later.",
+    openBilling: 'Open Plan & billing',
     tableCaption: 'Plans side by side',
     tableRows: (h: number) => [
       { label: 'Trends', free: `${h}h late, 3 a day`, pro: 'Real-time + 30-day view', premium: 'Real-time + 30-day view' },
@@ -708,13 +716,7 @@ export const en = {
       ask: 'Sign in to run this analysis. Free accounts get 20 points a month.',
       monitor: 'Sign in to start this monitor.',
     } as Record<string, string>,
-    why: 'Why sign in',
     benefits: ['Save your roots and monitors', 'Get high-intent posts pushed to you', 'Keep your answers and point history'],
-    google: 'Google',
-    email: 'Email',
-    withGoogle: 'Sign in with Google.',
-    continueGoogle: 'Continue with Google',
-    loading: 'Loading…',
     emailLabel: 'Email address',
     emailPlaceholder: 'your@email.com',
     sendCode: 'Send verification code',
@@ -729,9 +731,7 @@ export const en = {
     invalidEmail: 'Please enter a valid email address',
     enterCode: 'Please enter the verification code',
     loginFailed: 'Login failed. Please check your code and try again.',
-    timeout: 'Request timed out, check your connection.',
     network: 'Network error, try again shortly.',
-    missingLink: 'Authorization link missing, please retry.',
   },
   start: {
     metaTitle: 'Get started',
@@ -773,6 +773,13 @@ export const en = {
     followUp: 'Follow-up',
     byMonitor: 'X posts by monitor',
     posts: (n: number) => `${n.toLocaleString('en-US')} posts`,
+    left: 'Points left',
+    leftHint: (monthly: number) => `${monthly.toLocaleString('en-US')} new points on the 1st of each month`,
+    usedThisMonth: 'Points used this month',
+    monitors: 'Active monitors',
+    apiKeys: 'API keys',
+    recent: 'Recent activity',
+    allHistory: 'Full point history',
   },
   workspace: {
     name: 'Workspace',
@@ -786,15 +793,20 @@ export const en = {
   },
   userMenu: {
     accountMenu: 'Account menu',
-    credits: 'Credits',
-    invite: 'Invite Friends',
+    points: 'AI points',
+    invite: 'Copy invite link',
+    inviteReward: '+200 points each',
     copying: 'Copying…',
-    copied: 'Link Copied!',
+    copied: 'Link copied!',
     copyFailed: 'Could not copy the link. Please allow clipboard access and try again.',
-    settings: 'Settings',
+    admin: 'Admin dashboard',
     loggingOut: 'Logging out…',
     logOut: 'Log out',
   },
+  account: accountEn,
+  billing: billingEn,
+  referrals: referralsEn,
+  states: statesEn,
   switcher: {
     label: 'Language',
   },

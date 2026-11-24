@@ -1,0 +1,191 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import type { SubscriptionPreview, SubscriptionView } from "../lib/api";
+import { billingPrimaryAction, billingPrimaryText, billingText, lifetimePurchaseAction, planActionText, pricingPlanPresentation, subscriptionRestrictionText, subscriptionStatusText, changeDialogTitle, changeConfirmationText, changeSubmitText, changeTimingText, changePaymentText, changeResultText, billingFailureText } from "../lib/billing-presentation";
+import { subscriptionChangeBlocker, subscriptionPlanIntent } from "../lib/subscription-change";
+
+const pro: SubscriptionView = { plan: "pro", status: "active", billing_cycle: "monthly" };
+const preview: SubscriptionPreview = { currency: "usd", amount_due_now: 45, target_plan: "premium", target_interval: "monthly", change_mode: "immediate_prorated", immediate_charge: true, effective_at_period_end: false, message: "" };
+
+test("billing primary actions match free, ended, active, restricted and lifetime accounts", () => {
+  const cases: [string | undefined, SubscriptionView | null, ReturnType<typeof billingPrimaryAction>][] = [
+    [undefined, null, "loading"],
+    ["free", { plan: "free", status: "inactive" }, "upgrade"],
+    ["free", { ...pro, status: "canceled" }, "resubscribe"],
+    ["free", { ...pro, status: "incomplete_expired" }, "resubscribe"],
+    ["pro", pro, "change"],
+    ["premium", { ...pro, plan: "premium", status: "trialing" }, "change"],
+    ["pro", { ...pro, status: "canceling" }, "change"],
+    ["pro", { ...pro, cancel_at_period_end: true }, "change"],
+    ["pro", { ...pro, effective_cancel_at: "2026-11-01T00:00:00Z" }, "change"],
+    ["pro", { ...pro, status: "past_due" }, "change"],
+    ["pro", { ...pro, pending_payment: { amount_due: 100, currency: "usd" } }, "change"],
+    ["pro", { ...pro, scheduled_change: { plan: "starter", billing_cycle: "monthly" } }, "change"],
+    ["pro", { ...pro, status: "paused" }, "change"],
+    ["lifetime", null, "lifetime"],
+    ["lifetime", { plan: "free", status: "inactive" }, "lifetime"]
+  ];
+  for (const [membership, subscription, expected] of cases) {
+    assert.equal(billingPrimaryAction(membership, subscription), expected, JSON.stringify(subscription));
+    assert.ok(billingPrimaryText(expected).en);
+    assert.ok(billingPrimaryText(expected).zh);
+  }
+});
+
+test("pricing distinguishes resubscription from renewal recovery and exact billing interval", () => {
+  assert.equal(planActionText("subscribe", "Pro", "monthly", true).en, "Resubscribe to Pro");
+  assert.equal(planActionText("subscribe", "Pro", "monthly").zh, "订阅 Pro");
+  assert.equal(subscriptionPlanIntent({ plan: "pro", interval: "monthly" }, pro), "current");
+  assert.equal(planActionText(subscriptionPlanIntent({ plan: "pro", interval: "yearly" }, pro), "Pro", "yearly").en, "Change plan");
+  for (const current of [pro, { ...pro, status: "canceling" }, { ...pro, pending_payment: { amount_due: 100, currency: "usd" } }]) {
+    assert.equal(planActionText(subscriptionPlanIntent({ plan: "starter", interval: "monthly" }, current), "Starter", "monthly").en, "Change plan");
+  }
+});
+
+test("each restriction gives a localized next step, without claiming payment success", () => {
+  for (const blocker of ["payment", "scheduled", "cancellation", "unavailable"] as const) {
+    const copy = subscriptionRestrictionText(blocker);
+    assert.ok(copy?.en && copy.zh);
+  }
+  assert.equal(subscriptionRestrictionText(null), null);
+  assert.equal(subscriptionChangeBlocker({ ...pro, status: "past_due", cancel_at_period_end: true }), "payment");
+  assert.equal(subscriptionStatusText("internal_enum").en, "Needs attention");
+  assert.ok(!billingText.checkoutChecking.en.includes("completed"));
+  assert.ok(!billingText.checkoutWaiting.en.includes("successful"));
+});
+
+test("payment confirmation names the immediate amount or a future scheduled change", () => {
+  assert.equal(changeDialogTitle("downgrade").en, "Downgrade plan");
+  assert.equal(changeDialogTitle("interval").zh, "更改计费周期");
+  assert.equal(changeConfirmationText(null, "").en, "Review the price first");
+  assert.equal(changeConfirmationText(preview, "$45.00").en, "Confirm and pay $45.00");
+  const scheduled = { ...preview, change_mode: "period_end" as const, amount_due_now: 0 };
+  assert.equal(changeConfirmationText(scheduled, "$0.00").zh, "确认下期变更");
+  assert.equal(changeTimingText(scheduled).label.en, "Next billing cycle");
+  assert.ok(!changeTimingText({ ...preview, amount_due_now: 0 }).label.en.includes("payment"));
+  assert.equal(changeConfirmationText({ ...preview, amount_due_now: 0 }, "$0.00").en, "Confirm change");
+  assert.equal(changeTimingText(preview).label.zh, "付款成功后立即生效");
+  assert.match(changeTimingText(preview).detail.zh, /补差价/);
+  assert.equal(changeTimingText({ ...preview, amount_due_now: 0 }).label.zh, "确认后立即生效");
+});
+
+test("canceling a future plan change is distinct from canceling the subscription", () => {
+  assert.equal(planActionText("keep", "Premium", "monthly").en, "Keep Premium");
+  assert.equal(planActionText("keep", "Premium", "monthly").zh, "保留 Premium");
+  assert.equal(changeDialogTitle("keep").en, "Cancel plan change?");
+  assert.equal(changeDialogTitle("keep", "Premium").en, "Keep Premium?");
+});
+
+test("pricing separates active, scheduled and alternative plans after a downgrade", () => {
+  const subscription: SubscriptionView = { plan: "premium", status: "active", billing_cycle: "monthly", scheduled_change: { plan: "starter", billing_cycle: "monthly", effective_at: "2026-11-17T04:25:00Z" } };
+  const current = pricingPlanPresentation({ plan: "premium", interval: "monthly" }, "Premium", subscription);
+  assert.equal(current.badge?.en, "Current plan");
+  assert.equal(current.button.en, "Keep Premium");
+  assert.equal(current.scheduled, false);
+  assert.match(current.note?.en || "", /^Active until /);
+  assert.match(current.note?.en || "", /2026/);
+  const scheduled = pricingPlanPresentation({ plan: "starter", interval: "monthly" }, "Starter", subscription);
+  assert.equal(scheduled.badge?.en, "Upcoming plan");
+  assert.equal(scheduled.badge?.zh, "下期套餐");
+  assert.equal(scheduled.button.en, "Scheduled");
+  assert.equal(scheduled.scheduled, true);
+  assert.match(scheduled.note?.en || "", /^Starts /);
+  const alternative = pricingPlanPresentation({ plan: "pro", interval: "monthly" }, "Pro", subscription);
+  assert.equal(alternative.badge, null);
+  assert.equal(alternative.note, null);
+  assert.equal(alternative.button.en, "Change plan");
+});
+
+test("browsing another interval does not relabel it as the scheduled purchase", () => {
+  const subscription: SubscriptionView = { plan: "premium", status: "active", billing_cycle: "monthly", scheduled_change: { plan: "starter", billing_cycle: "monthly" } };
+  const otherInterval = pricingPlanPresentation({ plan: "starter", interval: "yearly" }, "Starter", subscription);
+  assert.equal(otherInterval.scheduled, false);
+  assert.equal(otherInterval.button.en, "Change plan");
+  assert.equal(otherInterval.badge?.en, "Upcoming · Monthly");
+  assert.equal(otherInterval.note?.en, "Starts next billing cycle");
+  const current = pricingPlanPresentation({ plan: "premium", interval: "yearly" }, "Premium", subscription);
+  assert.equal(current.badge?.en, "Current · Monthly");
+  assert.equal(current.button.en, "Change plan");
+  const scheduledYearly: SubscriptionView = { ...subscription, scheduled_change: { plan: "starter", billing_cycle: "yearly", effective_at: "not-a-date" } };
+  assert.equal(pricingPlanPresentation({ plan: "starter", interval: "monthly" }, "Starter", scheduledYearly).badge?.en, "Upcoming · Yearly");
+  assert.equal(pricingPlanPresentation({ plan: "starter", interval: "yearly" }, "Starter", scheduledYearly).note?.zh, "下个计费周期生效");
+});
+
+test("ended subscriptions and payment problems do not claim a future plan is confirmed", () => {
+  for (const subscription of [
+    { ...pro, status: "canceled" },
+    { ...pro, pending_payment: { amount_due: 100, currency: "usd" } }
+  ]) {
+    const card = pricingPlanPresentation({ plan: "starter", interval: "monthly" }, "Starter", { ...subscription, scheduled_change: { plan: "starter", billing_cycle: "monthly" } });
+    assert.equal(card.scheduled, false);
+    assert.equal(card.badge, null);
+    assert.equal(card.note, null);
+  }
+  assert.equal(pricingPlanPresentation({ plan: "pro", interval: "monthly" }, "Pro", pro).button.en, "Current plan");
+  assert.equal(pricingPlanPresentation({ plan: "starter", interval: "monthly" }, "Starter", null).button.en, "Subscribe to Starter");
+  assert.equal(pricingPlanPresentation({ plan: "pro", interval: "monthly" }, "Pro", { plan: "lifetime", status: "active" }).button.en, "Lifetime active");
+});
+
+test("disabled dialog actions explain current selection, billing restrictions, loading and errors", () => {
+  const state = { choice: "upgrade" as const, configured: true, phase: "loading" as const, preview: null, amount: "" };
+  assert.equal(changeSubmitText(state).en, "Loading price…");
+  assert.equal(changeSubmitText({ ...state, choice: "current" }).en, "Current plan");
+  assert.equal(changeSubmitText({ ...state, choice: "manage" }).zh, "请先处理当前订阅");
+  assert.equal(changeSubmitText({ ...state, configured: false }).en, "Choose an available plan");
+  assert.equal(changeSubmitText({ ...state, phase: "error" }).en, "Price unavailable");
+  assert.equal(changeSubmitText({ ...state, phase: "ready" }).en, "Price unavailable");
+  assert.equal(changeSubmitText({ ...state, phase: "ready", preview, amount: "$45.00" }).en, "Confirm and pay $45.00");
+});
+
+test("immediate paid changes disclose saved-method collection without claiming payment success", () => {
+  for (const change_mode of ["immediate_prorated", "immediate_reset_cycle"] as const) {
+    const copy = changePaymentText({ ...preview, change_mode });
+    assert.match(copy?.en || "", /saved payment method/);
+    assert.match(copy?.zh || "", /已保存的付款方式/);
+    assert.match(copy?.en || "", /verification/);
+    assert.doesNotMatch(copy?.en || "", /paid|successful|completed/i);
+  }
+  assert.equal(changePaymentText({ ...preview, change_mode: "period_end" }), null);
+  assert.equal(changePaymentText({ ...preview, amount_due_now: 0 }), null);
+});
+
+test("billing failures explain user actions instead of infrastructure details", () => {
+  assert.equal(billingFailureText("auth").title.zh, "请重新登录");
+  assert.equal(billingFailureText("network").title.en, "Connection interrupted");
+  assert.equal(billingFailureText("unknown", "subscription_change_pending").title.zh, "订阅状态已变化");
+  for (const kind of ["configuration", "disabled", "unavailable", "unknown"] as const) {
+    const copy = billingFailureText(kind);
+    assert.ok(!/API|redeploy|backend|credential|secret/i.test(JSON.stringify(copy)));
+  }
+});
+
+test("Lifetime is available at full price alongside a recurring subscription", () => {
+  assert.equal(lifetimePurchaseAction({ plan: "lifetime", status: "active" }), "owned");
+  for (const status of ["active", "trialing", "canceling", "past_due", "incomplete"]) {
+    assert.equal(lifetimePurchaseAction({ ...pro, status }), "buy", status);
+  }
+  for (const status of ["canceled", "expired", "ended", "incomplete_expired"]) {
+    assert.equal(lifetimePurchaseAction({ ...pro, status }), "buy", status);
+  }
+  assert.equal(lifetimePurchaseAction({ plan: "free", status: "inactive" }), "buy");
+});
+
+test("pending payment, scheduled changes and an applied change have distinct outcomes", () => {
+  const payment = changeResultText({ pending_payment: { amount_due: 4500, currency: "usd" } });
+  assert.equal(payment.state, "payment");
+  assert.equal(payment.title.en, "Payment required");
+  assert.ok(!payment.body.zh.includes("已生效"));
+  const scheduled = changeResultText({ scheduled_change: { plan: "starter", billing_cycle: "monthly" } });
+  assert.equal(scheduled.state, "scheduled");
+  assert.ok(scheduled.body.en.includes("current plan continues"));
+  assert.equal(changeResultText({}).state, "updated");
+});
+
+test("Premium annual card offers a change when the current subscription is monthly", () => {
+  const current = { plan: "premium", status: "active", billing_cycle: "monthly" };
+  assert.equal(pricingPlanPresentation({ plan: "premium", interval: "yearly" }, "Premium", current).button.en, "Change plan");
+  const upcoming = pricingPlanPresentation({ plan: "premium", interval: "yearly" }, "Premium", { ...current, scheduled_change: { plan: "premium", billing_cycle: "yearly", effective_at: "2026-11-17T04:25:00Z" } });
+  assert.equal(upcoming.badge?.en, "Upcoming plan");
+  assert.equal(upcoming.button.en, "Scheduled");
+  assert.equal(upcoming.note?.en, "Starts Nov 17, 2026");
+});

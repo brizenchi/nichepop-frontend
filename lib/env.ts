@@ -1,134 +1,67 @@
-/**
- * 环境变量验证系统
- * 使用 Zod 确保所有必需的环境变量都已正确配置
- */
+import { siteConfig } from "../content/site";
 
-import { z } from 'zod';
-
-/**
- * 客户端环境变量 Schema
- * 所有客户端可访问的环境变量必须以 NEXT_PUBLIC_ 开头
- */
-const clientEnvSchema = z.object({
-  // 应用基础配置
-  NEXT_PUBLIC_APP_NAME: z.string().min(1).default('MyApp'),
-  NEXT_PUBLIC_APP_DESCRIPTION: z.string().optional(),
-  NEXT_PUBLIC_APP_URL: z.string().url().optional(),
-
-  // API 配置
-  NEXT_PUBLIC_API_BACKEND_URL: z.string().url(),
-
-  // 认证配置
-  NEXT_PUBLIC_AUTH_REDIRECT_URL: z.string().url().optional(),
-
-  // 支付配置 (Stripe)
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
-  NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY: z.string().optional(),
-  NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY: z.string().optional(),
-  NEXT_PUBLIC_STRIPE_PRICE_ID_PREMIUM_MONTHLY: z.string().optional(),
-  NEXT_PUBLIC_STRIPE_PRICE_ID_PREMIUM_YEARLY: z.string().optional(),
-  NEXT_PUBLIC_STRIPE_LINK_PRO_MONTHLY: z.string().url().optional(),
-  NEXT_PUBLIC_STRIPE_LINK_PRO_YEARLY: z.string().url().optional(),
-  NEXT_PUBLIC_STRIPE_LINK_PREMIUM_MONTHLY: z.string().url().optional(),
-  NEXT_PUBLIC_STRIPE_LINK_PREMIUM_YEARLY: z.string().url().optional(),
-
-  // 功能开关
-  NEXT_PUBLIC_ENABLE_GOOGLE_AUTH: z
-    .string()
-    .optional()
-    .default('true')
-    .transform((val) => val === 'true'),
-  NEXT_PUBLIC_ENABLE_EMAIL_AUTH: z
-    .string()
-    .optional()
-    .default('true')
-    .transform((val) => val === 'true'),
-  NEXT_PUBLIC_ENABLE_GITHUB_AUTH: z
-    .string()
-    .optional()
-    .default('false')
-    .transform((val) => val === 'true'),
-
-  // UI 配置
-  NEXT_PUBLIC_MOBILE_BREAKPOINT: z
-    .string()
-    .optional()
-    .default('768')
-    .transform((val) => parseInt(val, 10)),
-});
-
-/**
- * 服务端环境变量 Schema
- * 仅在服务端可访问的敏感配置
- */
-const serverEnvSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  // 可以在这里添加服务端专用的环境变量
-  // 例如: STRIPE_SECRET_KEY, DATABASE_URL 等
-});
-
-/**
- * 解析和验证环境变量
- */
-function parseEnv() {
-  // 客户端环境变量
-  const clientEnvResult = clientEnvSchema.safeParse({
-    NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
-    NEXT_PUBLIC_APP_DESCRIPTION: process.env.NEXT_PUBLIC_APP_DESCRIPTION,
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-    NEXT_PUBLIC_API_BACKEND_URL: process.env.NEXT_PUBLIC_API_BACKEND_URL,
-    NEXT_PUBLIC_AUTH_REDIRECT_URL: process.env.NEXT_PUBLIC_AUTH_REDIRECT_URL,
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY,
-    NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY,
-    NEXT_PUBLIC_STRIPE_PRICE_ID_PREMIUM_MONTHLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PREMIUM_MONTHLY,
-    NEXT_PUBLIC_STRIPE_PRICE_ID_PREMIUM_YEARLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PREMIUM_YEARLY,
-    NEXT_PUBLIC_STRIPE_LINK_PRO_MONTHLY: process.env.NEXT_PUBLIC_STRIPE_LINK_PRO_MONTHLY,
-    NEXT_PUBLIC_STRIPE_LINK_PRO_YEARLY: process.env.NEXT_PUBLIC_STRIPE_LINK_PRO_YEARLY,
-    NEXT_PUBLIC_STRIPE_LINK_PREMIUM_MONTHLY: process.env.NEXT_PUBLIC_STRIPE_LINK_PREMIUM_MONTHLY,
-    NEXT_PUBLIC_STRIPE_LINK_PREMIUM_YEARLY: process.env.NEXT_PUBLIC_STRIPE_LINK_PREMIUM_YEARLY,
-    NEXT_PUBLIC_ENABLE_GOOGLE_AUTH: process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH,
-    NEXT_PUBLIC_ENABLE_EMAIL_AUTH: process.env.NEXT_PUBLIC_ENABLE_EMAIL_AUTH,
-    NEXT_PUBLIC_ENABLE_GITHUB_AUTH: process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH,
-    NEXT_PUBLIC_MOBILE_BREAKPOINT: process.env.NEXT_PUBLIC_MOBILE_BREAKPOINT,
-  });
-
-  if (!clientEnvResult.success) {
-    console.error('❌ Invalid environment variables:', clientEnvResult.error.format());
-    throw new Error('Invalid environment variables');
-  }
-
-  // 服务端环境变量（仅在服务端）
-  let serverEnvData = {} as z.infer<typeof serverEnvSchema>;
-
-  if (typeof window === 'undefined') {
-    const serverEnvResult = serverEnvSchema.safeParse({
-      NODE_ENV: process.env.NODE_ENV,
-    });
-
-    if (!serverEnvResult.success) {
-      console.error('❌ Invalid server environment variables:', serverEnvResult.error.format());
-      throw new Error('Invalid server environment variables');
-    }
-
-    serverEnvData = serverEnvResult.data;
-  }
-
-  return {
-    ...clientEnvResult.data,
-    ...serverEnvData,
-  };
+function normalizeOrigin(value: string | undefined, fallback: string): string {
+  const raw = value?.trim() || fallback;
+  return raw.replace(/\/+$/, "");
 }
 
-/**
- * 验证后的环境变量
- * 在整个应用中使用此对象来访问环境变量，而不是直接使用 process.env
- */
-export const env = parseEnv();
+function normalizePath(value: string | undefined, fallback: string): string {
+  const raw = value?.trim() || fallback;
+  return raw.startsWith("/") ? raw : `/${raw}`;
+}
 
-/**
- * 类型定义
- */
-export type ClientEnv = z.infer<typeof clientEnvSchema>;
-export type ServerEnv = z.infer<typeof serverEnvSchema>;
-export type Env = ClientEnv & ServerEnv;
+function parsePositiveInt(value: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt((value || "").trim(), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parseBoolean(value: string | undefined, fallback: boolean): boolean {
+  if (value === undefined || value.trim() === "") {
+    return fallback;
+  }
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
+
+export type OAuthProvider = "google" | "github";
+
+function parseOAuthProviders(value: string | undefined): OAuthProvider[] {
+  const raw = value || "";
+  return Array.from(new Set(
+    raw
+      .split(",")
+      .map((provider) => provider.trim().toLowerCase())
+      .filter((provider): provider is OAuthProvider => provider === "google" || provider === "github")
+  ));
+}
+
+export const appEnv = {
+  apiConfigured: Boolean(process.env.NEXT_PUBLIC_API_BASE_URL?.trim()),
+  appName: process.env.NEXT_PUBLIC_APP_NAME?.trim() || siteConfig.brand.name,
+  // Presentation only. Actual test/live payments are controlled by backend Stripe credentials.
+  demoMode: parseBoolean(process.env.NEXT_PUBLIC_DEMO_MODE, true),
+  appUrl: normalizeOrigin(process.env.NEXT_PUBLIC_APP_URL, "http://localhost:3000"),
+  apiBaseUrl: normalizeOrigin(process.env.NEXT_PUBLIC_API_BASE_URL, "http://localhost:8080/api/v1"),
+  authEmailConfigured: process.env.NEXT_PUBLIC_AUTH_EMAIL_ENABLED !== undefined,
+  authEmailEnabled: parseBoolean(process.env.NEXT_PUBLIC_AUTH_EMAIL_ENABLED, true),
+  authOAuthProvidersConfigured: process.env.NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS !== undefined,
+  authOAuthProviders: parseOAuthProviders(process.env.NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS),
+  analyticsMeasurementId: (process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID || "").trim(),
+  crispWebsiteId: (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID || "").trim(),
+  supportEmail: (process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "").trim(),
+  supportURL: (process.env.NEXT_PUBLIC_SUPPORT_URL || "").trim(),
+  defaultPlan: (process.env.NEXT_PUBLIC_DEFAULT_PLAN || "pro").trim(),
+  defaultInterval: (process.env.NEXT_PUBLIC_DEFAULT_INTERVAL || "monthly").trim(),
+  defaultCreditsQuantity: parsePositiveInt(process.env.NEXT_PUBLIC_DEFAULT_CREDITS_QUANTITY, 1),
+  stripeSuccessPath: normalizePath(process.env.NEXT_PUBLIC_STRIPE_SUCCESS_PATH, "/billing?checkout=success"),
+  stripeCancelPath: normalizePath(process.env.NEXT_PUBLIC_STRIPE_CANCEL_PATH, "/billing?checkout=cancelled")
+};
+
+export function apiUrl(path: string): string {
+  const suffix = path.startsWith("/") ? path : `/${path}`;
+  return `${appEnv.apiBaseUrl}${suffix}`;
+}
+
+export function appUrl(path: string): string {
+  const suffix = path.startsWith("/") ? path : `/${path}`;
+  return `${appEnv.appUrl}${suffix}`;
+}
