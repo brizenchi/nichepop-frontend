@@ -389,8 +389,11 @@ export interface ReportScore {
   tone: 'good' | 'warn' | 'bad'
 }
 
-/** Data sources the agent can call. Labels live in the dictionaries under tools. */
-export type AskTool = 'nichepop' | 'dfs_labs' | 'dfs_serp' | 'dfs_keywords' | 'dfs_trends' | 'dfs_content' | 'x' | 'community' | 'web' | 'gsc' | 'ai'
+/**
+ * Data sources the agent can call. Labels live in the dictionaries under tools. The backend's
+ * tools map onto these (GET /agent/platform/pricing, `ask_tool`); google_suggest is Google autocomplete.
+ */
+export type AskTool = 'nichepop' | 'dfs_labs' | 'dfs_serp' | 'dfs_keywords' | 'dfs_trends' | 'dfs_content' | 'x' | 'community' | 'web' | 'gsc' | 'ai' | 'google_suggest'
 
 /** One data call behind a report, shown as its evidence. */
 export interface ReportSource {
@@ -401,8 +404,8 @@ export interface ReportSource {
 /** What a report judges: a trending keyword, an idea, an existing product, or a whole market. */
 export type ReportKind = 'keyword' | 'idea' | 'product' | 'market'
 
-/** Sources with official or open APIs, plus the open web through a licensed search API. No Reddit data. */
-export type MentionSource = 'x' | 'hn' | 'bluesky' | 'youtube' | 'web'
+/** Where a post was found. Reports read Reddit and TikTok too (backend docs/agent-tools.md). */
+export type MentionSource = 'x' | 'hn' | 'bluesky' | 'youtube' | 'web' | 'reddit' | 'tiktok'
 
 /**
  * What a post is about, GummySearch-style themes. People asking for a recommendation or an
@@ -415,7 +418,8 @@ export interface Mention {
   source: MentionSource
   author: string
   text: string
-  hoursAgo: number
+  /** null when the source gave no date. */
+  hoursAgo: number | null
   intent: MentionIntent
   engagement: string
   replyDraft?: string
@@ -434,8 +438,10 @@ export interface KeywordReport {
   id: string
   kind: 'keyword'
   query: string
+  /** RFC 3339 from the API; demo reports carry a display date. */
   createdAt: string
-  wordAgeHours: number
+  /** How long NichePop has seen the word; null until the opportunity library knows it (backend #16). */
+  wordAgeHours: number | null
   verdict: RadarVerdict
   headline: string
   scores: ReportScore[]
@@ -457,10 +463,11 @@ export interface CompetitorRow {
   note: string
 }
 
+/** Missing figures are null and show as unknown. */
 export interface KeywordGap {
   keyword: string
-  volume: number
-  kd: number
+  volume: number | null
+  kd: number | null
   owner: string
   note: string
 }
@@ -512,9 +519,10 @@ export interface MarketReport {
   createdAt: string
   headline: string
   metrics: { label: string; value: string; note: string }[]
-  trend: number[]
+  /** Interest over time, oldest first; null for a missing point. */
+  trend: (number | null)[]
   players: CompetitorRow[]
-  rising: { keyword: string; growth: string; volume: number; kd: number }[]
+  rising: { keyword: string; growth: string; volume: number | null; kd: number | null }[]
   openings: string[]
   sources?: ReportSource[]
 }

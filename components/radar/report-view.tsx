@@ -120,16 +120,40 @@ function MetricGrid({ metrics }: { metrics: { label: string; value: string; note
   )
 }
 
-function Sparkline({ data }: { data: number[] }) {
-  const max = Math.max(...data)
-  const min = Math.min(...data)
-  const points = data.map((v, i) => `${(i / (data.length - 1)) * 100},${38 - ((v - min) / Math.max(1, max - min)) * 34}`).join(" ")
+/** Missing points (null) are skipped; the line joins the ones around them. */
+function Sparkline({ data }: { data: (number | null)[] }) {
+  const known = data.filter((v): v is number => v !== null)
+  if (known.length < 2) return null
+  const max = Math.max(...known)
+  const min = Math.min(...known)
+  const points = data
+    .map((v, i) => (v === null ? null : `${(i / (data.length - 1)) * 100},${38 - ((v - min) / Math.max(1, max - min)) * 34}`))
+    .filter((point) => point !== null)
+    .join(" ")
   return (
     <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="h-20 w-full" aria-hidden>
       <polygon points={`0,40 ${points} 100,40`} className="fill-primary/10" />
       <polyline points={points} fill="none" strokeWidth="2" className="stroke-primary" vectorEffect="non-scaling-stroke" />
     </svg>
   )
+}
+
+/** Monthly searches and difficulty; a figure the data did not have reads as unknown. */
+function VolumeKd({ volume, kd }: { volume: number | null; kd: number | null }) {
+  const t = useT().report
+  return (
+    <>
+      {volume === null ? t.unknown : `${volume.toLocaleString("en-US")}/mo`} · KD {kd ?? t.unknown}
+    </>
+  )
+}
+
+/** Reports from the API carry an RFC 3339 time; demo reports a display date. */
+function reportDate(createdAt: string, locale: string) {
+  if (!/^\d{4}-\d{2}-\d{2}T/.test(createdAt)) return createdAt
+  const date = new Date(createdAt)
+  if (Number.isNaN(date.getTime())) return createdAt
+  return date.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" })
 }
 
 function KeywordReportBody({ report, shared }: { report: KeywordReport; shared: boolean }) {
@@ -259,7 +283,7 @@ function ProductReportBody({ report, shared }: { report: ProductReport; shared: 
                     <tr key={gap.keyword}>
                       <td className="px-4 py-2.5 font-medium text-foreground">{gap.keyword}</td>
                       <td className="px-2 py-2.5 tabular-nums text-muted-foreground">
-                        {gap.volume.toLocaleString("en-US")}/mo · KD {gap.kd}
+                        <VolumeKd volume={gap.volume} kd={gap.kd} />
                       </td>
                       <td className="px-2 py-2.5 text-muted-foreground">{gap.owner}</td>
                       <td className="px-4 py-2.5 text-body">{gap.note}</td>
@@ -271,8 +295,8 @@ function ProductReportBody({ report, shared }: { report: ProductReport; shared: 
           </Section>
           <Section title={t.channels}>
             <div className="grid gap-3 sm:grid-cols-3">
-              {report.channels.map((channel) => (
-                <div key={channel.source} className="rounded-xl border border-border bg-card p-4">
+              {report.channels.map((channel, index) => (
+                <div key={`${channel.source}-${index}`} className="rounded-xl border border-border bg-card p-4">
                   <p className="text-xs font-medium text-muted-foreground">{channel.label}</p>
                   <p className="mt-1.5 text-base font-semibold text-foreground">{channel.volume}</p>
                   <p className="mt-1 text-xs leading-relaxed text-body">{channel.note}</p>
@@ -323,7 +347,7 @@ function MarketReportBody({ report, shared }: { report: MarketReport; shared: bo
                       <td className="px-4 py-2.5 font-medium text-foreground">{row.keyword}</td>
                       <td className="px-2 py-2.5 font-medium text-success">{row.growth}</td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">
-                        {row.volume.toLocaleString("en-US")}/mo · KD {row.kd}
+                        <VolumeKd volume={row.volume} kd={row.kd} />
                       </td>
                     </tr>
                   ))}
@@ -371,6 +395,7 @@ interface ReportViewProps {
 
 export function ReportView({ report, shared = false, collapsible = false, defaultExpanded = true }: ReportViewProps) {
   const t = useT()
+  const locale = useLocale()
   const [expanded, setExpanded] = useState(defaultExpanded)
   const KindIcon = KIND_ICON[report.kind]
   const open = !collapsible || expanded
@@ -380,7 +405,7 @@ export function ReportView({ report, shared = false, collapsible = false, defaul
       <header>
         <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <KindIcon className="h-3.5 w-3.5" />
-          {t.reports.kinds[report.kind].title} · {report.createdAt}
+          {t.reports.kinds[report.kind].title} · {reportDate(report.createdAt, locale)}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h2 className="text-2xl font-semibold tracking-tight text-foreground">{report.query}</h2>

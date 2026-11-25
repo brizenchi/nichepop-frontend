@@ -5,11 +5,12 @@
  */
 
 import { ApiError, apiRequest } from '../api'
-import { demoOr, liveOnly } from '../demo'
+import { demoStartReport } from '../data/agent-demo'
+import { DEMO_MODE, demoOr, liveOnly } from '../demo'
 import { findReport } from '../data/reports'
 import type { Locale } from '../i18n'
 import type { RadarReport, ReportKind } from '../types'
-import type { SentMessage } from './agent'
+import { followStream, type SentMessage, type StreamOptions } from './agent'
 import { apiClient, segment } from './client'
 
 /** GET /agent/platform/reports/:id: one of the reader's reports. */
@@ -49,13 +50,28 @@ export function generateReport(conversationId: string, kind: ReportKind, subject
   )
 }
 
+/**
+ * Starts a report and follows it: tool steps and charges, then `report.completed` with the
+ * report, `report.followup` with follow-up questions, and `run.completed`.
+ */
+export function streamReport(conversationId: string, kind: ReportKind, subject: string, requestId: string, options: StreamOptions): Promise<void> {
+  if (DEMO_MODE) return demoStartReport(conversationId, kind, subject, options)
+  return followStream(
+    apiClient.stream(`/agent/platform/conversations/${segment(conversationId)}/reports`, { method: 'POST', data: { kind, subject, request_id: requestId } }),
+    options,
+  )
+}
+
 export function getReport(id: string): Promise<SavedReport> {
   return liveOnly(() => apiClient.get<SavedReport>(`/agent/platform/reports/${segment(id)}`))
 }
 
-/** Sharing twice returns the same link. */
+/** Sharing twice returns the same link. Demo reports are shared under their own id. */
 export function shareReport(id: string): Promise<ReportShare> {
-  return liveOnly(() => apiClient.post<ReportShare>(`/agent/platform/reports/${segment(id)}/share`))
+  return demoOr(
+    () => ({ share_id: id, path: `/r/${id}` }),
+    () => apiClient.post<ReportShare>(`/agent/platform/reports/${segment(id)}/share`),
+  )
 }
 
 export function unshareReport(id: string): Promise<void> {

@@ -54,10 +54,35 @@ export class ApiClient {
     const response = await fetch(apiUrl(endpoint), { method: 'POST', headers, body: JSON.stringify(data ?? {}), cache: 'no-store' });
     const body = (response.headers.get('content-type') || '').includes('application/json') ? await response.json() : null;
     if (response.ok) return body as T;
-    const envelope = body as ApiEnvelope<unknown> | null;
-    if (response.status === 401 && token) clearSessionIfToken(token);
-    throw new ApiError(envelope?.msg?.trim() || `http ${response.status}`, response.status, envelope?.code ?? response.status, envelope?.data, response.headers.get('x-request-id') || '');
+    throw refusal(response, body, token);
   }
+
+  /**
+   * For the Agent's server-sent events: the open response, its body still to be read
+   * (lib/api/run-stream.ts). A refusal (402, 409, …) comes in the envelope and becomes an ApiError.
+   */
+  async stream(endpoint: string, init: { method?: 'GET' | 'POST'; data?: unknown; signal?: AbortSignal } = {}): Promise<Response> {
+    const token = readSession()?.token;
+    const headers: Record<string, string> = { Accept: 'text/event-stream' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    if (init.data !== undefined) headers['Content-Type'] = 'application/json';
+    const response = await fetch(apiUrl(endpoint), {
+      method: init.method ?? 'GET',
+      headers,
+      body: init.data === undefined ? undefined : JSON.stringify(init.data),
+      cache: 'no-store',
+      signal: init.signal,
+    });
+    if (response.ok) return response;
+    const body = (response.headers.get('content-type') || '').includes('application/json') ? await response.json().catch(() => null) : null;
+    throw refusal(response, body, token);
+  }
+}
+
+function refusal(response: Response, body: unknown, token: string | undefined): ApiError {
+  const envelope = body as ApiEnvelope<unknown> | null;
+  if (response.status === 401 && token) clearSessionIfToken(token);
+  return new ApiError(envelope?.msg?.trim() || `http ${response.status}`, response.status, envelope?.code ?? response.status, envelope?.data, response.headers.get('x-request-id') || '');
 }
 
 export const apiClient = new ApiClient();

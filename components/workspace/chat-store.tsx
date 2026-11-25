@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { getSeedConversations, type ChatMessage, type Conversation } from "@/lib/data/chat"
 import { DEMO_MODE } from "@/lib/demo"
 import { CHAT_KEY } from "@/lib/storageKeys"
@@ -9,7 +10,7 @@ interface ChatStore {
   conversations: Conversation[]
   /** Update or create a conversation; demo conversations become the user's own once continued. */
   updateConversation: (id: string, update: (messages: ChatMessage[]) => ChatMessage[]) => void
-  /** Points spent in this session, on top of the plan's demo usage. */
+  /** Demo builds: points spent in this session, on top of the plan's demo usage. */
   spent: number
   spend: (points: number) => void
 }
@@ -17,12 +18,13 @@ interface ChatStore {
 const ChatStoreContext = createContext<ChatStore | null>(null)
 
 /**
- * Chats shared by the workspace sidebar and the Ask AI page. Demo builds keep them in localStorage
- * next to the seeded examples; real builds start empty and never read those chats (the account's
- * conversations come with frontend#10 and #11).
+ * Chats shared by the workspace sidebar and the Ask AI page, so a reply keeps streaming into its
+ * chat while the reader is on another page. Demo builds keep them in localStorage next to the
+ * seeded examples; real builds hold this visit's chats (the account's history comes with #11).
  */
 export function ChatStoreProvider({ children }: { children: ReactNode }) {
-  const seeds = useMemo(() => (DEMO_MODE ? getSeedConversations() : []), [])
+  const locale = useLocale()
+  const seeds = useMemo(() => (DEMO_MODE ? getSeedConversations(locale) : []), [locale])
   const [custom, setCustom] = useState<Conversation[]>([])
   const [spent, setSpent] = useState(0)
 

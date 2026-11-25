@@ -30,4 +30,5 @@ export const RADAR_VIEWS_KEY = createStorageKey('radar_views');
 export const RADAR_MONITORS_KEY = createStorageKey('radar_monitors');
 export const ONBOARDING_KEY = createStorageKey('onboarding');
 export const ONBOARDING_DRAFT_KEY = createStorageKey('onboarding_draft');
-export const CHAT_KEY = createStorageKey('chat');
+// Demo chats; v2 since messages became runs (frontend#10), older ones are dropped.
+export const CHAT_KEY = createStorageKey('chat_v2');
