@@ -1,16 +1,21 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { ArrowUpRight, Hash, Map, Package, Plus, Swords, Zap } from "lucide-react"
 import { AccountGate } from "@/components/account/ui"
-import { useT } from "@/components/i18n/locale-provider"
+import { useLocale, useT } from "@/components/i18n/locale-provider"
+import { NotificationSettings } from "@/components/monitors/notification-settings"
 import { usePlan } from "@/components/monitors/use-plan"
+import { PricingModal } from "@/components/pricing-modal"
 import { isHighIntent } from "@/components/radar/mention-card"
 import { buttonStyles, cardStyles } from "@/components/radar/ui"
 import { EmptyState, ErrorState, LoadingState } from "@/components/workspace/resource-states"
 import { useMonitorFeed, useMonitors } from "@/hooks/use-monitors"
+import { useNow } from "@/hooks/use-now"
 import { DEMO_MODE } from "@/lib/demo"
 import { cn } from "@/lib/utils"
+import { relativeTime } from "@/lib/utils/relative-time"
 import type { Monitor } from "@/lib/types"
 
 function QuotaBar({ label, used, max }: { label: string; used: number; max: number }) {
@@ -27,8 +32,13 @@ function QuotaBar({ label, used, max }: { label: string; used: number; max: numb
 function MonitorCard({ monitor }: { monitor: Monitor }) {
   const dict = useT()
   const t = dict.monitors
+  const locale = useLocale()
+  const now = useNow()
   const { limits } = usePlan()
-  const { data: feed } = useMonitorFeed(monitor.id)
+  // A saved monitor that never finished a check has no feed to ask for.
+  const { data: feed } = useMonitorFeed(DEMO_MODE || monitor.lastCheckedAt !== undefined ? monitor.id : null)
+  const hourly = monitor.checkEverySeconds ? monitor.checkEverySeconds <= 3600 : limits.checkEvery === "hour"
+  const checkedAt = monitor.lastCheckedAt ?? (feed && now > 0 ? now - feed.lastCheckedMinutes * 60_000 : undefined)
   const KindIcon = monitor.kind === "keyword" ? Hash : monitor.kind === "market" ? Map : Package
   const stats = feed
     ? [
@@ -47,11 +57,14 @@ function MonitorCard({ monitor }: { monitor: Monitor }) {
         </span>
         {monitor.demo && <span className="rounded-md bg-primary-soft px-1.5 py-0.5 font-medium text-primary">{t.example}</span>}
         {monitor.status === "paused" && <span className="rounded-md bg-muted px-1.5 py-0.5 font-medium text-muted-foreground">{dict.states.paused}</span>}
-        <span className="ml-auto">{feed ? t.checked(feed.lastCheckedMinutes, limits.checkEvery === "hour") : t.firstCheck}</span>
+        {monitor.lastCheck && !monitor.lastCheck.ok && (
+          <span className="rounded-md bg-danger-soft px-1.5 py-0.5 font-medium text-destructive">{dict.monitorManage.checkFailedBadge}</span>
+        )}
+        <span className="ml-auto">{checkedAt && now > 0 ? dict.monitorManage.checkedAt(relativeTime(checkedAt, now, locale), hourly) : t.pending}</span>
       </div>
       <p className="mt-3 text-base font-semibold text-foreground group-hover:text-primary">{monitor.name}</p>
       {monitor.description && <p className="mt-0.5 text-sm text-muted-foreground">{monitor.description}</p>}
-      <p className="mt-2 truncate font-mono text-xs text-faint">{monitor.xQuery}</p>
+      {monitor.tracks.includes("mentions") && <p className="mt-2 truncate font-mono text-xs text-faint">{monitor.xQuery}</p>}
       <div className="mt-3 flex flex-wrap gap-1.5">
         {monitor.tracks.map((track) => (
           <span key={track} className="rounded-full border border-border px-2 py-0.5 text-[11px] text-body">
@@ -112,8 +125,13 @@ export default function MonitorsPage() {
 function MonitorList() {
   const t = useT()
   const tm = t.monitors
-  const { monitors, custom, loaded, error, reload } = useMonitors()
-  const { limits, xPostsUsed } = usePlan()
+  const { monitors, custom, loaded, error, reload, limits: listLimits } = useMonitors()
+  const plan = usePlan()
+  const [showPricing, setShowPricing] = useState(false)
+  // The list's own limits (GET /monitors) are the freshest; demo builds use the plan's.
+  const maxMonitors = listLimits?.monitors ?? plan.limits.monitors
+  const xPosts = listLimits?.x_posts ?? plan.limits.xPosts
+  const xPostsUsed = listLimits?.x_posts_used ?? plan.xPostsUsed
   // Paused monitors do not count towards the plan.
   const active = custom.filter((monitor) => monitor.status !== "paused").length
 
@@ -123,9 +141,17 @@ function MonitorList() {
   return (
     <>
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        <QuotaBar label={tm.quotaMonitors(active, limits.monitors)} used={active} max={limits.monitors} />
-        <QuotaBar label={limits.xPosts > 0 ? tm.quotaPosts(xPostsUsed, limits.xPosts) : tm.xQuotaLocked} used={xPostsUsed} max={limits.xPosts} />
+        <QuotaBar label={tm.quotaMonitors(active, maxMonitors)} used={active} max={maxMonitors} />
+        <QuotaBar label={xPosts > 0 ? tm.quotaPosts(xPostsUsed, xPosts) : tm.xQuotaLocked} used={xPostsUsed} max={xPosts} />
       </div>
+      {active >= maxMonitors && (
+        <div className={cn(cardStyles, "mt-3 flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between")}>
+          <p className="text-sm text-body">{tm.limitReached(maxMonitors)}</p>
+          <button type="button" onClick={() => setShowPricing(true)} className={cn(buttonStyles.primary, "h-9 shrink-0")}>
+            {t.common.upgrade}
+          </button>
+        </div>
+      )}
 
       {monitors.length === 0 ? (
         <EmptyState
@@ -146,6 +172,10 @@ function MonitorList() {
           ))}
         </div>
       )}
+
+      {/* Push settings live on the account; demo builds have no account to keep them on. */}
+      {!DEMO_MODE && <NotificationSettings className="mt-8" />}
+      <PricingModal open={showPricing} onOpenChange={setShowPricing} feature={tm.title} />
     </>
   )
 }

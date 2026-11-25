@@ -2,6 +2,7 @@ import { accountEn } from './account'
 import { billingEn } from './billing'
 import { referralsEn } from './referrals'
 import { statesEn } from './states'
+import { monitorManageEn } from './monitors'
 
 const growthWindow: Record<string, string> = { '24h': '24h', '48h': '48h', '72h': '72h', '7d': '7d', '30d': '30d' }
 
@@ -649,19 +650,18 @@ export const en = {
     copy: 'Copy',
     copied: 'Copied',
     all: 'All',
+    original: (source: string) => `Open on ${source}`,
   },
   monitors: {
     metaTitle: 'Monitors - Keep Watch on Your Words and Product',
     metaDescription: 'Posts on X, competitor moves, rankings and rising topics for the words you build on and your own product.',
     title: 'Monitors',
-    intro: 'Products, markets and keywords you’re watching: sentiment on X, competitor moves, rankings and rising topics, with a weekly list of what to do next. Add them from a chat with AI or right here.',
+    intro: 'Products, markets and keywords you’re watching: sentiment on X, competitor moves, rankings and rising topics, with a list of what to do next. Add them from a chat with AI or right here.',
     new: 'New monitor',
     quotaMonitors: (used: number, max: number) => `${used} of ${max} monitors`,
     quotaPosts: (used: number, max: number) => `${used.toLocaleString('en-US')} of ${max.toLocaleString('en-US')} X posts this month`,
     kinds: { keyword: 'Keyword', product: 'Product', market: 'Market' } as Record<string, string>,
     tracks: { mentions: 'Sentiment', competitors: 'Competitors', rankings: 'Rankings', trends: 'Rising topics' },
-    checked: (min: number, hourly: boolean) => `Checked ${min} min ago · ${hourly ? 'every hour' : 'daily'}`,
-    firstCheck: 'First check runs within an hour',
     highIntentCount: (n: number) => `${n} high-intent ${n === 1 ? 'post' : 'posts'}`,
     rankingsUp: (n: number) => `${n} ${n === 1 ? 'ranking' : 'rankings'} up`,
     movesCount: (n: number) => `${n} competitor ${n === 1 ? 'move' : 'moves'}`,
@@ -689,8 +689,6 @@ export const en = {
     sitePlaceholder: 'yoursite.com',
     gscTitle: 'Google Search Console',
     gscText: 'Read-only. Rankings and growth plans use your real data instead of estimates.',
-    connect: 'Connect',
-    connected: 'Connected',
     xSearch: 'X search',
     xSearchHint: 'Checked every hour on Pro',
     estimate: (n: number) => `About ${n.toLocaleString('en-US')} posts a day`,
@@ -710,8 +708,6 @@ export const en = {
     xQuotaLocked: 'X discussions: Pro feature',
     channels: 'Push to',
     channelNames: { email: 'Email', telegram: 'Telegram', discord: 'Discord', slack: 'Slack', feishu: 'Feishu' } as Record<string, string>,
-    webhook: 'Webhook URL',
-    webhookHelp: 'Telegram, Discord, Slack and Feishu are pushed through a webhook.',
     delivery: 'Delivery',
     realtime: 'High-intent posts instantly',
     realtimeText: 'Everything else goes into a daily digest.',
@@ -719,7 +715,7 @@ export const en = {
     errorName: 'Add a keyword or product URL first.',
     back: 'All monitors',
     tabs: { mentions: 'Sentiment', competitors: 'Competitors', rankings: 'Rankings', trends: 'Rising topics', suggestions: 'What to do' },
-    postsToday: (n: number) => `${n} posts read today`,
+    postsToday: (n: number) => `${n} ${n === 1 ? 'post' : 'posts'} read today`,
     intentNote: 'High-intent posts are pushed to you right away; the rest go into the daily digest.',
     noPosts: 'No posts match this filter.',
     keyword: 'Keyword',
@@ -729,7 +725,7 @@ export const en = {
     notRanking: 'Not ranking yet',
     rankingsFor: (site: string) => `Rankings for ${site}`,
     askAbout: 'Ask AI',
-    suggestionsNote: 'Generated every Monday from this monitor’s data.',
+    suggestionsNote: 'Written from this monitor’s new events, at most once a day.',
     pending: 'Waiting for the first check',
     pendingText: 'The first check runs within an hour. Until then, open an example monitor to see what you will get.',
     seeExample: 'See an example',
@@ -836,6 +832,7 @@ export const en = {
   billing: billingEn,
   referrals: referralsEn,
   states: statesEn,
+  monitorManage: monitorManageEn,
   switcher: {
     label: 'Language',
   },

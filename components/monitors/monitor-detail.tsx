@@ -1,30 +1,42 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Hash, Hourglass, Map, Package, Trash2 } from "lucide-react"
+import { AlertTriangle, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Bell, Check, Circle, Hash, Hourglass, Loader2, Map, Package, Pause, Pencil, Play, Trash2, XCircle } from "lucide-react"
 import { AccountGate, ApiErrorNotice } from "@/components/account/ui"
-import { useT } from "@/components/i18n/locale-provider"
+import { useLocale, useT } from "@/components/i18n/locale-provider"
+import { PricingModal } from "@/components/pricing-modal"
 import { ActionList } from "@/components/radar/action-list"
-import { CompetitorMovesList } from "@/components/radar/brief-lists"
 import { INTENT_STYLES, MentionCard, isHighIntent } from "@/components/radar/mention-card"
 import { buttonStyles, cardStyles } from "@/components/radar/ui"
 import { MiniTrend } from "@/components/radar/word-row"
 import { ErrorState, LoadingState } from "@/components/workspace/resource-states"
 import { useAccount } from "@/hooks/use-account"
-import { useMonitorFeed, useMonitors } from "@/hooks/use-monitors"
+import { useMonitor, useMonitorFeed, usePolling } from "@/hooks/use-monitors"
+import { useNow } from "@/hooks/use-now"
+import { deleteMonitor, pauseMonitor, resumeMonitor } from "@/lib/api/monitors"
 import { DEMO_MODE } from "@/lib/demo"
 import { cn } from "@/lib/utils"
+import { relativeTime } from "@/lib/utils/relative-time"
 import type { MentionIntent, Monitor, MonitorFeed } from "@/lib/types"
+import { MonitorSaveError } from "./monitor-errors"
+import { MonitorMoves } from "./monitor-moves"
 import { usePlan } from "./use-plan"
 
 type Tab = "mentions" | "competitors" | "rankings" | "trends" | "suggestions"
 const INTENTS: MentionIntent[] = ["alternatives", "recommendation", "pain", "advice", "money", "launch"]
+/** While a new monitor waits for its first check, the page asks again this often. */
+const FIRST_CHECK_POLL_MS = 20_000
+
+function Empty({ children }: { children: ReactNode }) {
+  return <p className={cn(cardStyles, "px-5 py-8 text-center text-sm text-muted-foreground")}>{children}</p>
+}
 
 function MentionsTab({ feed }: { feed: MonitorFeed }) {
   const t = useT()
   const [intent, setIntent] = useState<MentionIntent | "all">("all")
+  if (feed.mentions.length === 0) return <Empty>{t.monitorManage.noMentions}</Empty>
   const themes = INTENTS.filter((value) => feed.themes?.[value] || feed.mentions.some((m) => m.intent === value))
   const mentions = intent === "all" ? feed.mentions : feed.mentions.filter((m) => m.intent === intent)
   return (
@@ -70,8 +82,32 @@ function MentionsTab({ feed }: { feed: MonitorFeed }) {
   )
 }
 
+function CompetitorsTab({ feed, monitor }: { feed: MonitorFeed; monitor: Monitor }) {
+  const t = useT().monitorManage
+  return (
+    <div className="space-y-4">
+      <MonitorMoves moves={feed.competitorMoves} />
+      {monitor.competitors.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 text-xs text-muted-foreground">{t.watching}</span>
+          {monitor.competitors.map((domain) => (
+            <span key={domain} className="rounded-full border border-border bg-card px-2.5 py-1 text-xs text-body">
+              {domain}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">{t.noCompetitors}</p>
+      )}
+    </div>
+  )
+}
+
 function RankingsTab({ feed, monitor }: { feed: MonitorFeed; monitor: Monitor }) {
-  const t = useT().monitors
+  const dict = useT()
+  const t = dict.monitors
+  const tm = dict.monitorManage
+  if (feed.rankings.length === 0) return <Empty>{tm.noRankKeywords}</Empty>
   return (
     <div className="space-y-3">
       {monitor.site && <p className="text-xs text-muted-foreground">{t.rankingsFor(monitor.site)}</p>}
@@ -90,7 +126,14 @@ function RankingsTab({ feed, monitor }: { feed: MonitorFeed; monitor: Monitor })
             {feed.rankings.map((row) => (
               <tr key={row.keyword}>
                 <td className="px-4 py-3 font-medium text-foreground">{row.keyword}</td>
-                <td className="px-2 py-3 tabular-nums text-foreground">{row.position ? `#${row.position}` : <span className="text-muted-foreground">{t.notRanking}</span>}</td>
+                <td className="px-2 py-3 tabular-nums text-foreground">
+                  {row.position ? (
+                    `#${row.position}`
+                  ) : (
+                    // The API says how deep it looked: depth 0 means no measurement yet.
+                    <span className="text-muted-foreground">{row.depth === undefined ? t.notRanking : row.depth > 0 ? tm.notInTop(row.depth) : tm.notChecked}</span>
+                  )}
+                </td>
                 <td className="px-2 py-3 tabular-nums">
                   {row.change !== 0 && (
                     <span className={cn("inline-flex items-center gap-0.5 text-xs font-medium", row.change > 0 ? "text-success" : "text-warning")}>
@@ -99,7 +142,7 @@ function RankingsTab({ feed, monitor }: { feed: MonitorFeed; monitor: Monitor })
                     </span>
                   )}
                 </td>
-                <td className="px-2 py-3 tabular-nums text-muted-foreground">{row.volume.toLocaleString("en-US")}</td>
+                <td className="px-2 py-3 tabular-nums text-muted-foreground">{row.volume ? row.volume.toLocaleString("en-US") : "–"}</td>
                 <td className="px-4 py-3">
                   {row.trend.length > 1 && <MiniTrend data={row.trend.map((position) => 100 - position)} verdict="build" className="h-6 w-20" />}
                 </td>
@@ -113,7 +156,9 @@ function RankingsTab({ feed, monitor }: { feed: MonitorFeed; monitor: Monitor })
 }
 
 function TrendsTab({ feed }: { feed: MonitorFeed }) {
-  const t = useT().monitors
+  const dict = useT()
+  const t = dict.monitors
+  if (feed.trends.length === 0) return <Empty>{dict.monitorManage.trendsSoon}</Empty>
   return (
     <ul className={cn(cardStyles, "divide-y divide-border")}>
       {feed.trends.map((trend) => (
@@ -132,6 +177,97 @@ function TrendsTab({ feed }: { feed: MonitorFeed }) {
             {t.askAbout}
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Before the first results: what has happened so far, and what the first check said if it failed. */
+function FirstCheck({ monitor }: { monitor: Monitor }) {
+  const t = useT().monitorManage
+  const locale = useLocale()
+  const now = useNow()
+  const failed = monitor.lastCheck && !monitor.lastCheck.ok
+  const next = monitor.nextCheckAt && now > 0 ? relativeTime(monitor.nextCheckAt, now, locale) : null
+  const steps: { state: "done" | "now" | "failed" | "later"; text: ReactNode }[] = [
+    { state: "done", text: t.stepSaved },
+    failed
+      ? { state: "failed", text: <>{t.firstCheckFailed} {monitor.lastCheck?.error && <span className="text-muted-foreground">{monitor.lastCheck.error}</span>}</> }
+      : { state: "now", text: next && (monitor.nextCheckAt ?? 0) > now ? t.stepCheck(next) : t.stepCheckSoon },
+    { state: "later", text: t.stepResults },
+  ]
+  const icons = { done: Check, now: Loader2, failed: XCircle, later: Circle }
+  return (
+    <div className={cn(cardStyles, "p-6")}>
+      <p className="text-base font-semibold text-foreground">{t.firstCheckTitle}</p>
+      <ol className="mt-4 space-y-3">
+        {steps.map((step, index) => {
+          const Icon = icons[step.state]
+          return (
+            <li key={index} className="flex items-start gap-2.5 text-sm">
+              <Icon
+                className={cn(
+                  "mt-0.5 h-4 w-4 shrink-0",
+                  step.state === "done" && "text-success",
+                  step.state === "now" && "animate-spin text-primary",
+                  step.state === "failed" && "text-destructive",
+                  step.state === "later" && "text-faint",
+                )}
+              />
+              <span className={step.state === "later" ? "text-muted-foreground" : "text-body"}>{step.text}</span>
+            </li>
+          )
+        })}
+      </ol>
+      {failed && next && <p className="mt-3 text-xs text-muted-foreground">{t.nextCheck(next)}</p>}
+      <p className="mt-4 text-xs text-muted-foreground">{t.autoRefresh}</p>
+    </div>
+  )
+}
+
+/** When it was checked, when it is checked next, and anything that went wrong. */
+function CheckStatus({ monitor, feed }: { monitor: Monitor; feed: MonitorFeed | null }) {
+  const dict = useT()
+  const t = dict.monitorManage
+  const locale = useLocale()
+  const now = useNow()
+  const { limits } = usePlan()
+  const hourly = monitor.checkEverySeconds ? monitor.checkEverySeconds <= 3600 : limits.checkEvery === "hour"
+  // Demo feeds only know how many minutes ago they were checked.
+  const checkedAt = monitor.lastCheckedAt ?? (feed && now > 0 ? now - feed.lastCheckedMinutes * 60_000 : undefined)
+  const paused = monitor.status === "paused"
+  return (
+    <div className="text-xs text-muted-foreground lg:text-right">
+      <p>{checkedAt && now > 0 ? t.checkedAt(relativeTime(checkedAt, now, locale), hourly) : dict.monitors.pending}</p>
+      {!paused && monitor.nextCheckAt && now > 0 && <p className="mt-0.5">{t.nextCheck(relativeTime(Math.max(monitor.nextCheckAt, now), now, locale))}</p>}
+      {feed && <p className="mt-0.5">{dict.monitors.postsToday(feed.postsToday)}</p>}
+    </div>
+  )
+}
+
+function Warnings({ monitor }: { monitor: Monitor }) {
+  const t = useT().monitorManage
+  const check = monitor.lastCheck
+  // `detail` is the backend's own words (e.g. which data source failed): kept, in small print.
+  const items: { text: string; detail?: string }[] = []
+  if (check && !check.ok) items.push({ text: `${t.checkFailed(check.failures)} ${t.retryNext}`, detail: check.error })
+  if (check?.ok && check.failedFetches > 0) items.push({ text: t.partial(check.failedFetches) })
+  for (const notice of check?.notices ?? []) {
+    if (notice === "x_quota_exhausted") items.push({ text: t.xQuotaUsed })
+    else if (notice.startsWith("daily_limit:")) items.push({ text: t.dailyLimit(notice.slice("daily_limit:".length)) })
+  }
+  if (monitor.pushFailures) items.push({ text: t.pushFailed(monitor.pushFailures), detail: monitor.lastPushError })
+  if (items.length === 0) return null
+  return (
+    <ul className="mt-4 space-y-2">
+      {items.map((item) => (
+        <li key={item.text} role="status" className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-body">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+          <span className="min-w-0">
+            {item.text}
+            {item.detail && <span className="mt-0.5 block break-words font-mono text-xs text-muted-foreground">{item.detail}</span>}
+          </span>
         </li>
       ))}
     </ul>
@@ -157,39 +293,76 @@ export function MonitorDetail({ id, initialTab }: { id: string; initialTab?: str
 
 function MonitorView({ id, initialTab }: { id: string; initialTab?: string }) {
   const router = useRouter()
-  const t = useT().monitors
-  const { monitors, loaded, error, reload, remove } = useMonitors()
-  const { limits } = usePlan()
-  const monitor = monitors.find((m) => m.id === id)
+  const dict = useT()
+  const t = dict.monitors
+  const tm = dict.monitorManage
+  const { refresh: refreshUsage } = useAccount()
+  const { data: monitor, loading, error, reload } = useMonitor(id)
   const { data: feed, loading: feedLoading, error: feedError, reload: reloadFeed } = useMonitorFeed(monitor ? id : null)
   const [tab, setTab] = useState<Tab>(TABS.includes(initialTab as Tab) ? (initialTab as Tab) : "mentions")
+  const [busy, setBusy] = useState(false)
+  const [actionError, setActionError] = useState<unknown>(null)
   const [deleteError, setDeleteError] = useState<unknown>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showPricing, setShowPricing] = useState(false)
 
-  if (error || !loaded) {
+  // A saved monitor that has not finished a check yet has no results (the feed is null). Its
+  // first check runs within minutes: keep asking until it is done.
+  const neverChecked = !DEMO_MODE && !!monitor && !monitor.demo && monitor.lastCheckedAt === undefined
+  const waiting = neverChecked && monitor?.status === "active"
+  const poll = useCallback(() => {
+    void reload()
+    void reloadFeed()
+  }, [reload, reloadFeed])
+  usePolling(waiting, poll, FIRST_CHECK_POLL_MS)
+
+  if (error || !monitor) {
     return (
       <div className="radar-theme min-h-screen bg-radar-bg text-radar-text">
         <main className="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
-          {error ? <ErrorState error={error} onRetry={() => void reload()} /> : <LoadingState />}
+          {error ? (
+            <ErrorState error={error} onRetry={() => void reload()} />
+          ) : loading ? (
+            <LoadingState />
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">{t.notFound}</p>
+              <Link href="/monitors" className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
+                <ArrowLeft className="h-4 w-4" />
+                {t.back}
+              </Link>
+            </>
+          )}
         </main>
       </div>
     )
   }
 
-  if (!monitor) {
-    return (
-      <div className="radar-theme min-h-screen bg-radar-bg text-radar-text">
-        {loaded && (
-          <main className="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
-            <p className="text-sm text-muted-foreground">{t.notFound}</p>
-            <Link href="/monitors" className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
-              <ArrowLeft className="h-4 w-4" />
-              {t.back}
-            </Link>
-          </main>
-        )}
-      </div>
-    )
+  const paused = monitor.status === "paused"
+  const run = async (action: () => Promise<unknown>, setError: (error: unknown) => void) => {
+    setBusy(true)
+    setActionError(null)
+    setDeleteError(null)
+    try {
+      await action()
+      void refreshUsage()
+    } catch (failure) {
+      setError(failure)
+    } finally {
+      setBusy(false)
+    }
   }
+  // Resuming is refused with PLAN_LIMIT_REACHED when the plan has no monitor left.
+  const togglePause = () =>
+    run(async () => {
+      await (paused ? resumeMonitor(id) : pauseMonitor(id))
+      await Promise.all([reload(), reloadFeed()])
+    }, setActionError)
+  const remove = () =>
+    run(async () => {
+      await deleteMonitor(id)
+      router.push("/monitors")
+    }, setDeleteError)
 
   const tabs: { id: Tab; label: string; count?: number }[] = [
     ...(monitor.tracks.includes("mentions") ? [{ id: "mentions" as const, label: t.tabs.mentions, count: feed?.mentions.filter(isHighIntent).length }] : []),
@@ -204,7 +377,6 @@ function MonitorView({ id, initialTab }: { id: string; initialTab?: string }) {
 
   return (
     <div className="radar-theme min-h-screen bg-radar-bg text-radar-text">
-
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6">
         <Link href="/monitors" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
@@ -219,15 +391,37 @@ function MonitorView({ id, initialTab }: { id: string; initialTab?: string }) {
                 {t.kinds[monitor.kind]}
               </span>
               {monitor.demo && <span className="rounded-md bg-primary-soft px-1.5 py-0.5 font-medium text-primary">{t.example}</span>}
+              {paused && <span className="rounded-md bg-muted px-1.5 py-0.5 font-medium text-muted-foreground">{dict.states.paused}</span>}
             </div>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{monitor.name}</h1>
+            <h1 className="mt-2 break-words text-3xl font-semibold tracking-tight text-foreground">{monitor.name}</h1>
             {monitor.description && <p className="mt-1 text-sm text-muted-foreground">{monitor.description}</p>}
           </div>
-          <div className="text-xs text-muted-foreground lg:text-right">
-            <p>{feed ? t.checked(feed.lastCheckedMinutes, limits.checkEvery === "hour") : t.firstCheck}</p>
-            {feed && <p className="mt-0.5">{t.postsToday(feed.postsToday)}</p>}
-          </div>
+          <CheckStatus monitor={monitor} feed={feed} />
         </header>
+
+        {!monitor.demo && (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Link href={`/monitors/${monitor.id}/edit`} className={cn(buttonStyles.secondary, "h-9")}>
+              <Pencil className="h-4 w-4" />
+              {tm.edit}
+            </Link>
+            <button type="button" onClick={() => void togglePause()} disabled={busy} className={cn(buttonStyles.secondary, "h-9")}>
+              {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+              {paused ? tm.resume : tm.pause}
+            </button>
+            {!DEMO_MODE && (
+              <Link href="/monitors#notifications" className="inline-flex h-9 items-center gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground">
+                <Bell className="h-3.5 w-3.5" />
+                {monitor.delivery === "realtime" ? tm.deliveryRealtime : tm.deliveryDigest}
+              </Link>
+            )}
+          </div>
+        )}
+        {paused && <p className="mt-3 text-sm text-body">{tm.paused}</p>}
+        <div className="mt-3 empty:hidden">
+          <MonitorSaveError error={actionError} onUpgrade={() => setShowPricing(true)} />
+        </div>
+        <Warnings monitor={monitor} />
 
         {monitor.tracks.includes("mentions") && (
           <p className="mt-4 truncate rounded-lg border border-border bg-card px-3 py-2 font-mono text-xs text-body">
@@ -257,68 +451,69 @@ function MonitorView({ id, initialTab }: { id: string; initialTab?: string }) {
         <div className="mt-5">
           {feedError ? (
             <ErrorState error={feedError} onRetry={() => void reloadFeed()} />
-          ) : feedLoading ? (
-            <LoadingState />
           ) : !feed ? (
-            <div className={cn(cardStyles, "flex flex-col items-start gap-3 p-6")}>
-              <Hourglass className="h-5 w-5 text-primary" />
-              <p className="text-base font-semibold text-foreground">{t.pending}</p>
-              <p className="max-w-xl text-sm text-body">{t.pendingText}</p>
-              {DEMO_MODE && (
+            neverChecked ? (
+              paused ? <Empty>{tm.pausedNoResults}</Empty> : <FirstCheck monitor={monitor} />
+            ) : feedLoading ? (
+              <LoadingState />
+            ) : (
+              <div className={cn(cardStyles, "flex flex-col items-start gap-3 p-6")}>
+                <Hourglass className="h-5 w-5 text-primary" />
+                <p className="text-base font-semibold text-foreground">{t.pending}</p>
+                <p className="max-w-xl text-sm text-body">{t.pendingText}</p>
                 <Link href={`/monitors/${exampleId}`} className={cn(buttonStyles.secondary, "h-9")}>
                   {t.seeExample}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
-              )}
-            </div>
+              </div>
+            )
           ) : (
             <>
               {activeTab === "mentions" && <MentionsTab feed={feed} />}
-              {activeTab === "competitors" && (
-                <div className="space-y-4">
-                  <CompetitorMovesList moves={feed.competitorMoves} />
-                  <div className="flex flex-wrap gap-1.5">
-                    {monitor.competitors.map((domain) => (
-                      <span key={domain} className="rounded-full border border-border bg-card px-2.5 py-1 text-xs text-body">
-                        {domain}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {activeTab === "competitors" && <CompetitorsTab feed={feed} monitor={monitor} />}
               {activeTab === "rankings" && <RankingsTab feed={feed} monitor={monitor} />}
               {activeTab === "trends" && <TrendsTab feed={feed} />}
-              {activeTab === "suggestions" && (
-                <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground">{t.suggestionsNote}</p>
-                  <ActionList actions={feed.suggestions} locked={false} onUpgrade={() => undefined} />
-                </div>
-              )}
+              {activeTab === "suggestions" &&
+                (feed.suggestions.length === 0 ? (
+                  <Empty>{tm.noSuggestions}</Empty>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground">{t.suggestionsNote}</p>
+                    <ActionList actions={feed.suggestions} locked={false} onUpgrade={() => undefined} />
+                  </div>
+                ))}
             </>
           )}
         </div>
 
         {!monitor.demo && (
           <div className="mt-10 border-t border-border pt-6">
-            <button
-              onClick={async () => {
-                setDeleteError(null)
-                try {
-                  await remove(monitor.id)
-                  router.push("/monitors")
-                } catch (failure) {
-                  setDeleteError(failure)
-                }
-              }}
-              className={cn(buttonStyles.ghost, "h-9 text-destructive hover:text-destructive")}
-            >
-              <Trash2 className="h-4 w-4" />
-              {t.delete}
-            </button>
-            <ApiErrorNotice error={deleteError} />
+            {confirmDelete ? (
+              <div className="flex flex-col gap-3 rounded-lg border border-destructive/30 bg-danger-soft p-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-body">{tm.deleteConfirm}</p>
+                <div className="flex shrink-0 gap-2">
+                  <button type="button" onClick={() => setConfirmDelete(false)} className={cn(buttonStyles.ghost, "h-9")}>
+                    {tm.cancel}
+                  </button>
+                  <button type="button" onClick={() => void remove()} disabled={busy} className={cn(buttonStyles.secondary, "h-9 text-destructive hover:text-destructive")}>
+                    <Trash2 className="h-4 w-4" />
+                    {tm.deleteYes}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button type="button" onClick={() => setConfirmDelete(true)} className={cn(buttonStyles.ghost, "h-9 text-destructive hover:text-destructive")}>
+                <Trash2 className="h-4 w-4" />
+                {t.delete}
+              </button>
+            )}
+            <div className="mt-3 empty:hidden">
+              <ApiErrorNotice error={deleteError} />
+            </div>
           </div>
         )}
       </main>
+      <PricingModal open={showPricing} onOpenChange={setShowPricing} feature={t.title} />
     </div>
   )
 }

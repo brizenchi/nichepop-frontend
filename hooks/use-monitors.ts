@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { useAccount } from "@/hooks/use-account"
 import { useResource } from "@/hooks/use-resource"
-import { createMonitor, deleteMonitor, estimateXPosts, getMonitorFeed, listMonitors } from "@/lib/api/monitors"
+import { createMonitor, deleteMonitor, estimateXPosts, getMonitor, getMonitorFeed, listMonitors } from "@/lib/api/monitors"
 import type { MonitorDraft } from "@/lib/data/monitors"
 import { DEMO_MODE } from "@/lib/demo"
 
@@ -49,6 +49,23 @@ export function useMonitors() {
     add,
     remove,
   }
+}
+
+/** One monitor with how its checks are going (GET /monitors/:id); null data when there is no such monitor. */
+export function useMonitor(id: string) {
+  const locale = useLocale()
+  const { isAuthenticated } = useAccount()
+  const load = useCallback(() => getMonitor(id, locale), [id, locale])
+  return useResource(DEMO_MODE || isAuthenticated ? load : null)
+}
+
+/** Calls `tick` every `ms` while `on`, e.g. to see a monitor's first check arrive. */
+export function usePolling(on: boolean, tick: () => void, ms: number) {
+  useEffect(() => {
+    if (!on) return
+    const timer = setInterval(tick, ms)
+    return () => clearInterval(timer)
+  }, [on, tick, ms])
 }
 
 /** A monitor's feed; null data until its first check. */
